@@ -1,0 +1,12 @@
+您好，以下为最新采购订单，请查收。
+
+烦请确认订单内容，盖章回传，并安排发货。
+
+收货信息：
+
+{{receiver_name}}
+{{receiver_phone}}
+
+{{delivery_address}}
+
+谢谢。

@@ -1,0 +1,9 @@
+PDF_DIR=D:\采购工作\采购订单电子档
+RENDER_DPI=180
+CACHE_FROM_LOG=27
+NORMALIZED=0
+TOTAL=3
+SKIP|强毅双章合同PO20260526004.pdf|文件名已符合目标格式
+SKIP|明达康双章合同PO20260526001.pdf|文件名已符合目标格式
+SKIP|瑞宝双章合同PO20260522005.pdf|文件名已符合目标格式
+SUMMARY|success=0|skipped=3|failed=0

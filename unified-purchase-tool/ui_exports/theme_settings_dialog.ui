@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ThemeSettingsDialog</class>
+ <widget class="QDialog" name="ThemeSettingsDialog">
+  <property name="windowTitle"><string>Theme Settings</string></property>
+  <layout class="QVBoxLayout" name="mainLayout" stretch="1,0">
+   <property name="spacing"><number>6</number></property>
+   <item>
+    <widget class="QScrollArea" name="colorScroll">
+     <property name="widgetResizable"><bool>true</bool></property>
+     <widget class="QWidget" name="colorInner">
+      <layout class="QVBoxLayout" name="formLayout">
+       <property name="spacing"><number>4</number></property>
+       <item><layout class="QHBoxLayout" name="row_bg_main"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>2</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>2</number></property><item><widget class="QLabel" name="lbl_bg_main"><property name="text"><string>Background</string></property></widget></item><item><widget class="QPushButton" name="color_bg_main"/></item><item><spacer name="hsp_bg_main"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item></layout></item>
+       <item><layout class="QHBoxLayout" name="row_bg_card"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>2</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>2</number></property><item><widget class="QLabel" name="lbl_bg_card"><property name="text"><string>Card BG</string></property></widget></item><item><widget class="QPushButton" name="color_bg_card"/></item><item><spacer name="hsp_bg_card"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item></layout></item>
+       <item><layout class="QHBoxLayout" name="row_text_main"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>2</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>2</number></property><item><widget class="QLabel" name="lbl_text_main"><property name="text"><string>Primary Text</string></property></widget></item><item><widget class="QPushButton" name="color_text_main"/></item><item><spacer name="hsp_text_main"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item></layout></item>
+       <item><layout class="QHBoxLayout" name="row_text_secondary"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>2</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>2</number></property><item><widget class="QLabel" name="lbl_text_secondary"><property name="text"><string>Secondary Text</string></property></widget></item><item><widget class="QPushButton" name="color_text_secondary"/></item><item><spacer name="hsp_text_secondary"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item></layout></item>
+       <item><layout class="QHBoxLayout" name="row_border"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>2</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>2</number></property><item><widget class="QLabel" name="lbl_border"><property name="text"><string>Border</string></property></widget></item><item><widget class="QPushButton" name="color_border"/></item><item><spacer name="hsp_border"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item></layout></item>
+       <item><layout class="QHBoxLayout" name="row_primary"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>2</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>2</number></property><item><widget class="QLabel" name="lbl_primary"><property name="text"><string>Primary Blue</string></property></widget></item><item><widget class="QPushButton" name="color_primary"/></item><item><spacer name="hsp_primary"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item></layout></item>
+       <item><layout class="QHBoxLayout" name="row_green"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>2</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>2</number></property><item><widget class="QLabel" name="lbl_green"><property name="text"><string>Success Green</string></property></widget></item><item><widget class="QPushButton" name="color_green"/></item><item><spacer name="hsp_green"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item></layout></item>
+       <item><layout class="QHBoxLayout" name="row_orange"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>2</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>2</number></property><item><widget class="QLabel" name="lbl_orange"><property name="text"><string>Warning Orange</string></property></widget></item><item><widget class="QPushButton" name="color_orange"/></item><item><spacer name="hsp_orange"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item></layout></item>
+       <item><layout class="QHBoxLayout" name="row_red"><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>2</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>2</number></property><item><widget class="QLabel" name="lbl_red"><property name="text"><string>Error Red</string></property></widget></item><item><widget class="QPushButton" name="color_red"/></item><item><spacer name="hsp_red"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item></layout></item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="buttonRow">
+     <property name="spacing"><number>8</number></property>
+     <item><widget class="QPushButton" name="previewBtn"><property name="text"><string>Preview</string></property></widget></item>
+     <item><widget class="QPushButton" name="saveBtn"><property name="text"><string>Save &amp;&amp; Apply</string></property></widget></item>
+     <item><widget class="QPushButton" name="cancelBtn"><property name="text"><string>Cancel</string></property></widget></item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+</ui>

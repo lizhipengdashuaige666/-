@@ -1,0 +1,44 @@
+{
+  "万一\nwechat\n里博安侣商务沟通": {
+    "supplier": "万一",
+    "platform": "wechat",
+    "chat_name": "里博安侣商务沟通",
+    "count": 1
+  },
+  "中易达\nwechat\n安侣中易达订单群": {
+    "supplier": "中易达",
+    "platform": "wechat",
+    "chat_name": "安侣中易达订单群",
+    "count": 1
+  },
+  "乐勤\nwechat\n乐勤采购沟通群": {
+    "supplier": "乐勤",
+    "platform": "wechat",
+    "chat_name": "乐勤采购沟通群",
+    "count": 1
+  },
+  "激埃特\nwechat\n安侣-激埃特采购沟通群": {
+    "supplier": "激埃特",
+    "platform": "wechat",
+    "chat_name": "安侣-激埃特采购沟通群",
+    "count": 1
+  },
+  "捷通\nwxwork\n安侣-捷通印刷采购沟通群": {
+    "supplier": "捷通",
+    "platform": "wxwork",
+    "chat_name": "安侣-捷通印刷采购沟通群",
+    "count": 1
+  },
+  "恒辉达\nwechat\n安侣-恒辉达采购沟通群": {
+    "supplier": "恒辉达",
+    "platform": "wechat",
+    "chat_name": "安侣-恒辉达采购沟通群",
+    "count": 1
+  },
+  "品鑫\nwechat\n品鑫明纬电源采购群": {
+    "supplier": "品鑫",
+    "platform": "wechat",
+    "chat_name": "品鑫明纬电源采购群",
+    "count": 1
+  }
+}

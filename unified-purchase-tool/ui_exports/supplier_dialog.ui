@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SupplierDialog</class>
+ <widget class="QDialog" name="SupplierDialog">
+  <property name="windowTitle"><string>New Supplier</string></property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <property name="spacing"><number>6</number></property>
+     <item><widget class="QLabel" name="lblSupplier"><property name="text"><string>Supplier</string></property></widget></item>
+     <item><widget class="QLineEdit" name="supplierEdit"/></item>
+     <item><widget class="QLabel" name="lblPlatform"><property name="text"><string>Platform</string></property></widget></item>
+     <item><widget class="QComboBox" name="platformCombo"/></item>
+     <item><widget class="QLabel" name="lblChat"><property name="text"><string>Chat Name</string></property></widget></item>
+     <item><widget class="QLineEdit" name="chatEdit"><property name="placeholderText"><string>e.g. Supplier Purchasing Group</string></property></widget></item>
+     <item><widget class="QLabel" name="lblDelivery"><property name="text"><string>Delivery Type</string></property></widget></item>
+     <item><widget class="QComboBox" name="deliveryCombo"/></item>
+    </layout>
+   </item>
+   <item><widget class="QDialogButtonBox" name="buttonBox"><property name="standardButtons"><set>QDialogButtonBox::Ok|QDialogButtonBox::Cancel</set></property></widget></item>
+  </layout>
+ </widget>
+ <resources/>
+</ui>

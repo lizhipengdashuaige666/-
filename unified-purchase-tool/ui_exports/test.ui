@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TestDialog</class>
+ <widget class="QDialog" name="TestDialog">
+  <property name="windowTitle"><string>Test</string></property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <item>
+    <widget class="QPushButton" name="btn">
+     <property name="text"><string>Click Me</string></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+</ui>

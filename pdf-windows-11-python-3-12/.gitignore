@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+logs/
+cache/ocr_text_cache.json
+cache/theme.json
+cache/vendor_cache.json
+temp/
