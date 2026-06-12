@@ -1,7 +1,7 @@
 """Unified design tokens and QSS builder for 采购工作台.
 
-iOS-native style: deep card-lift background, white floating cards,
-clear input-card-log hierarchy, high-contrast text.
+Dark mode — iOS-style layered surfaces: deep canvas, lifted cards,
+clear input-card-log hierarchy, high-contrast text on dark grounds.
 """
 
 from __future__ import annotations
@@ -10,50 +10,51 @@ import json
 from pathlib import Path
 
 from PySide6.QtGui import QColor
+from PySide6.QtWidgets import QFrame, QGraphicsDropShadowEffect
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Design Tokens — iOS-style layered color system
+# Design Tokens — Dark-mode layered color system
 # ═══════════════════════════════════════════════════════════════════════════
 
-PRIMARY   = "#007AFF"
-SUCCESS   = "#2C6E2F"
-WARNING   = "#E67C00"
-DANGER    = "#D33C2C"
+PRIMARY   = "#0A84FF"
+SUCCESS   = "#30D158"
+WARNING   = "#FF9F0A"
+DANGER    = "#FF453A"
 
-TEXT      = "#1C1C1E"
-TEXT2     = "#6C6C70"
-TEXT3     = "#AEAEB2"
+TEXT      = "#F5F5F7"
+TEXT2     = "#98989E"
+TEXT3     = "#6C6C72"
 
-# Background hierarchy: deep canvas → white card → tinted inset areas
-BG        = "#B0B0BD"   # medium-gray canvas, white cards float above it
-CARD      = "#FFFFFF"   # white floating surfaces
-CARD_ALT  = "#E4E4EC"   # inset areas: logs, OCR info, preview — clearly not white
+# Dark background hierarchy: deepest canvas → lifted card → recessed inset
+BG        = "#1A1A1E"   # deep dark canvas
+CARD      = "#252528"   # cards float slightly above canvas
+CARD_ALT  = "#1E1E22"   # inset areas: logs, OCR info, preview — recessed
 
-# Inputs: tinted, focus → white + blue glow
-INPUT_BG        = "#EAEAF0"
-INPUT_BG_FOCUS  = "#FFFFFF"
-TOOLBAR_BG      = "#C0C0CA"   # lighter than canvas, distinct from card
+# Inputs: slightly recessed on card, focus → brighten + blue edge
+INPUT_BG        = "#1E1E22"
+INPUT_BG_FOCUS  = "#2C2C30"
+TOOLBAR_BG      = "#1A1A1E"   # same as canvas, border separates
 
-# Border hierarchy — stronger so cards stand out against canvas
-BORDER    = "#A0A0B0"   # card outlines, visible against canvas
-BORDER_M  = "#9898A8"   # input borders, rename card outline
-BORDER_S  = "#BEBECD"   # log/inset borders (lighter, against card_alt)
+# Border hierarchy — subtle but visible on dark
+BORDER    = "#3A3A3E"   # card outlines
+BORDER_M  = "#48484E"   # input borders, rename card outline
+BORDER_S  = "#34343A"   # log/inset borders
 
-# Selection & hover — adjusted for darker canvas
-SELECTION_BG  = "#D6E4FF"  # blue tint for nav selection
-HOVER_BG      = "#E8E8F0"  # list item hover
+# Selection & hover — dark-adapted blue tints
+SELECTION_BG  = "#1C3A5C"  # blue tint for nav selection
+HOVER_BG      = "#2E2E34"  # list item hover
 
 # Inset panels
-LOG_BG        = "#ECECF2"
-ERR_BG        = "#FFECEA"
-WARN_BG       = "#FFEAD2"
+LOG_BG        = "#1A1A1E"
+ERR_BG        = "#3D1C1A"
+WARN_BG       = "#3D2E10"
 
-# Tag colors
-TAG_GREEN  = "#2C6E2F"
-TAG_ORANGE = "#E67C00"
-TAG_BLUE   = "#007AFF"
-TAG_RED    = "#D33C2C"
-TAG_GRAY   = "#8E8E93"
+# Tag colors — bright for dark backgrounds
+TAG_GREEN  = "#30D158"
+TAG_ORANGE = "#FF9F0A"
+TAG_BLUE   = "#0A84FF"
+TAG_RED    = "#FF453A"
+TAG_GRAY   = "#636368"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Spacing & Shape
@@ -130,6 +131,38 @@ def _alpha(hex_color: str, a: float) -> str:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Drop shadow — QSS doesn't support box-shadow, so we do it in code
+# ═══════════════════════════════════════════════════════════════════════════
+
+_CARD_OBJECT_NAMES = {
+    "sideCard", "centerCard", "reviewCard", "statCard",
+    "renameCard", "card", "ocrInfoCard", "previewCard",
+    "dropPanel", "panel", "sidebar",
+}
+
+
+def apply_shadow(widget: QFrame, blur: int = 18, offset: tuple = (0, 4),
+                 alpha: float = 0.10) -> None:
+    """Apply a soft drop shadow to make a card feel lifted off the canvas."""
+    shadow = QGraphicsDropShadowEffect()
+    shadow.setBlurRadius(blur)
+    shadow.setOffset(offset[0], offset[1])
+    c = QColor(0, 0, 0, int(255 * alpha))
+    shadow.setColor(c)
+    widget.setGraphicsEffect(shadow)
+
+
+def apply_shadows_to_tree(root, skip: set[str] | None = None) -> None:
+    """Walk a widget tree and apply drop shadows to card-style frames."""
+    if skip is None:
+        skip = set()
+    for w in root.findChildren(QFrame):
+        name = w.objectName()
+        if name in _CARD_OBJECT_NAMES and name not in skip:
+            apply_shadow(w)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # QSS Builder
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -155,7 +188,7 @@ def build(theme: dict | None = None) -> str:
 
     return f"""
 /* ==================================================================
-   Unified QSS — iOS Native Style
+   Unified QSS — Dark Mode
    Canvas {t_["bg"]} / Cards {t_["card"]} / Inputs {t_["input_bg"]} / Insets {t_["log_bg"]}
    ================================================================== */
 
@@ -164,6 +197,9 @@ QMainWindow > QWidget {{
     background: {t_["bg"]}; color: {t_["text"]};
     font-family: {FONT}; font-size: 13px; font-weight: {W_REG};
 }}
+
+/* ---- All labels default to text color (fixes unnamed labels on dark bg) ---- */
+QLabel {{ color: {t_["text"]}; }}
 
 /* ---- Shared Sidebar ---- */
 QFrame#sharedSidebar {{
@@ -181,7 +217,7 @@ QPushButton#navItem {{
     background: transparent; color: {t_["text"]}; border: 0; border-radius: {R_MD}px;
     padding: 10px 18px; font-weight: {W_MED}; font-size: 14px; text-align: left;
 }}
-QPushButton#navItem:hover {{ background: rgba(0,0,0,0.04); }}
+QPushButton#navItem:hover {{ background: rgba(255,255,255,0.06); }}
 QPushButton#navItem:checked {{
     background: {t_["selection_bg"]}; color: {p}; font-weight: {W_SB};
 }}
@@ -189,7 +225,7 @@ QLabel#versionLabel {{
     font-size: 11px; color: {t_["text3"]}; padding: 8px 18px;
 }}
 
-/* ---- Cards — white floating surfaces, radius 18px ---- */
+/* ---- Cards — floating dark surfaces, radius 18px ---- */
 QFrame#sideCard {{
     background: {t_["card"]}; border: 2px solid {t_["border"]}; border-radius: {R_LG}px;
 }}
@@ -205,9 +241,6 @@ QFrame#statCard {{
 QFrame#renameCard {{
     background: {t_["card"]}; border: 2px solid {bm}; border-radius: {R_LG}px;
 }}
-QFrame#renameCardActive {{
-    background: {t_["card"]}; border: 3px solid {p}; border-radius: {R_LG}px;
-}}
 QFrame#card {{
     background: {t_["card"]}; border: 2px solid {t_["border"]}; border-radius: {R_LG}px;
 }}
@@ -219,7 +252,7 @@ QFrame#ocrInfoCard {{
 QFrame#previewCard {{
     background: {t_["card_alt"]}; border: 2px dashed {bm}; border-radius: {R_LG}px;
 }}
-QFrame#previewCard:hover {{ border-color: {p}; background: {_darken(t_["card_alt"], 0.03)}; }}
+QFrame#previewCard:hover {{ border-color: {p}; background: {_lighten(t_["card_alt"], 0.06)}; }}
 
 /* ---- Workbench: drop panel ---- */
 QFrame#dropPanel {{
@@ -294,7 +327,7 @@ QPushButton#dangerButton {{
     border: 1px solid {_alpha(d, 0.25)}; border-radius: {R_MD}px;
     padding: 6px 14px; font-weight: {W_MED}; font-size: 12px;
 }}
-QPushButton#dangerButton:hover {{ background: {d}; color: white; }}
+QPushButton#dangerButton:hover {{ background: {d}; color: #FFFFFF; }}
 
 /* ---- Filter / chip buttons ---- */
 QPushButton#filterBtn {{
@@ -312,8 +345,8 @@ QListWidget {{
     padding: 2px 0; outline: none;
 }}
 QListWidget::item {{
-    border-radius: {R_MD}px; padding: 12px 16px; margin: 2px 4px;
-    color: {t_["text"]}; font-size: 12px; font-weight: {W_MED}; min-height: 44px;
+    border-radius: {R_MD}px; padding: 10px 16px; margin: 2px 4px;
+    color: {t_["text"]}; font-size: 12px; font-weight: {W_MED}; min-height: 52px;
     background: {t_["card"]};
 }}
 QListWidget::item:hover:!selected {{
@@ -332,10 +365,10 @@ QLabel#cardTitle        {{ font-size: 15px; font-weight: 620; color: {t_["text"]
 QLabel#sideTitle        {{ font-size: 15px; font-weight: 620; color: {t_["text"]}; }}
 QLabel#sideSubtitle     {{ font-size: 11px; color: {t_["text2"]}; }}
 QLabel#statValue        {{ font-size: 42px; font-weight: 720; letter-spacing: -0.5px; }}
-QLabel#statValue[statColor="#1C1C1E"] {{ color: {t_["text"]}; }}
-QLabel#statValue[statColor="#2C6E2F"] {{ color: {s}; }}
-QLabel#statValue[statColor="#D33C2C"] {{ color: {d}; }}
-QLabel#statValue[statColor="#007AFF"] {{ color: {p}; }}
+QLabel#statValue[statColor="#F5F5F7"] {{ color: {t_["text"]}; }}
+QLabel#statValue[statColor="#30D158"] {{ color: {s}; }}
+QLabel#statValue[statColor="#FF453A"] {{ color: {d}; }}
+QLabel#statValue[statColor="#0A84FF"] {{ color: {p}; }}
 QLabel#statLabel        {{ font-size: 13px; font-weight: {W_MED}; color: {t_["text2"]}; }}
 QLabel#infoValue        {{ font-size: 14px; font-weight: {W_BOLD}; color: {t_["text"]}; }}
 QLabel#sectionTitle     {{ font-size: 11px; font-weight: {W_SB}; color: {t_["text2"]}; letter-spacing: -0.1px; margin-bottom: 2px; }}
@@ -365,7 +398,7 @@ QLineEdit#suggestName:focus {{
     border-color: {p}; background: {t_["input_bg_focus"]};
 }}
 
-/* ---- Generic inputs — #F5F5F7, focus → white + blue glow ---- */
+/* ---- Generic inputs ---- */
 QLineEdit, QComboBox {{
     background: {t_["input_bg"]}; color: {t_["text"]}; border: 1px solid {bm};
     border-radius: {R_MD}px; padding: 8px 12px; font-size: 12px;
@@ -376,7 +409,7 @@ QLineEdit:focus, QComboBox:focus {{
 }}
 QComboBox::drop-down {{ border: 0; width: 20px; }}
 QComboBox QAbstractItemView {{
-    background: white; color: {t_["text"]}; border: 1px solid {t_["border"]};
+    background: {t_["card"]}; color: {t_["text"]}; border: 1px solid {t_["border"]};
     border-radius: {R_MD}px; padding: 4px;
     selection-background-color: {t_["selection_bg"]};
 }}
@@ -396,7 +429,7 @@ QComboBox {{
 QComboBox:hover {{ background: {t_["border"]}; }}
 QComboBox::drop-down {{ border: 0; width: 18px; }}
 QComboBox QAbstractItemView {{
-    background: white; color: {t_["text"]}; border: 1px solid {t_["border"]};
+    background: {t_["card"]}; color: {t_["text"]}; border: 1px solid {t_["border"]};
     border-radius: 8px; selection-background-color: {t_["selection_bg"]}; padding: 3px;
 }}
 
@@ -439,7 +472,7 @@ QRadioButton#messageTab {{
     padding: 7px 12px; font-weight: 560; font-size: 12px;
 }}
 QRadioButton#messageTab::indicator {{ width: 0; height: 0; }}
-QRadioButton#messageTab:checked {{ background: {p}; color: white; }}
+QRadioButton#messageTab:checked {{ background: {p}; color: #FFFFFF; }}
 QRadioButton#messageTab:hover:!checked {{ background: {bm}; }}
 
 /* ---- Collapse button ---- */
@@ -495,11 +528,11 @@ QScrollArea#previewScroll {{
 
 /* ---- Scrollbars — 5px wide, rounded ---- */
 QScrollBar:vertical {{ background: transparent; width: 5px; border-radius: 3px; }}
-QScrollBar::handle:vertical {{ background: rgba(0,0,0,0.12); border-radius: 3px; min-height: 20px; }}
-QScrollBar::handle:vertical:hover {{ background: rgba(0,0,0,0.22); }}
+QScrollBar::handle:vertical {{ background: rgba(255,255,255,0.10); border-radius: 3px; min-height: 20px; }}
+QScrollBar::handle:vertical:hover {{ background: rgba(255,255,255,0.18); }}
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
 QScrollBar:horizontal {{ background: transparent; height: 5px; }}
-QScrollBar::handle:horizontal {{ background: rgba(0,0,0,0.12); border-radius: 3px; min-width: 20px; }}
+QScrollBar::handle:horizontal {{ background: rgba(255,255,255,0.10); border-radius: 3px; min-width: 20px; }}
 QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{ width: 0; }}
 
 /* ---- Dialogs ---- */
@@ -510,7 +543,7 @@ QDialog QLineEdit {{
 }}
 
 /* ---- Disabled fallback ---- */
-QPushButton:disabled {{ background: #FAFAFC; color: {t_["text3"]}; border: 1px solid {bm}; }}
+QPushButton:disabled {{ background: #2A2A30; color: {t_["text3"]}; border: 1px solid {bm}; }}
 """
 
 

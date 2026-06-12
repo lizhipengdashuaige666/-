@@ -23,9 +23,11 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMessageBox,
+    QProgressBar,
     QPushButton,
     QPlainTextEdit,
     QRadioButton,
+    QStackedWidget,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -39,7 +41,7 @@ from core.parser import parse_document
 from core.templates import ensure_default_templates, render_message
 from unified import style as _style
 
-_PRIMARY = "#007AFF"
+_PRIMARY = "#0A84FF"
 
 def _status_colors(shell: object | None = None) -> dict[str, str]:
     """Return status→color map from current theme tokens."""
@@ -47,11 +49,11 @@ def _status_colors(shell: object | None = None) -> dict[str, str]:
     if shell is not None and hasattr(shell, '_theme_overrides'):
         t.update(shell._theme_overrides or {})
     return {
-        "已发送": t.get("success", "#2C6E2F"),
-        "发送失败": t.get("danger", "#D33C2C"),
-        "待配置": t.get("warning", "#E67C00"),
-        "请确认群聊": t.get("primary", "#007AFF"),
-        "已跳过": t.get("text3", "#AEAEB2"),
+        "已发送": t.get("success", "#30D158"),
+        "发送失败": t.get("danger", "#FF453A"),
+        "待配置": t.get("warning", "#FF9F0A"),
+        "请确认群聊": t.get("primary", "#0A84FF"),
+        "已跳过": t.get("text3", "#6C6C72"),
     }
 
 ADAPTERS = {
@@ -171,7 +173,14 @@ class PurchaseWorkbench(QWidget):
         left.setSpacing(12)
         left.addWidget(self._build_drop_panel())
         left.addWidget(self._build_filter_panel())
-        left.addWidget(self._build_table(), 1)
+
+        # Table + empty-state placeholder, stacked
+        self._table_stack = QStackedWidget()
+        self._table_stack.addWidget(self._build_table())
+        self._table_stack.addWidget(self._build_empty_state())
+        self._table_stack.setCurrentIndex(1)  # start with empty state
+        left.addWidget(self._table_stack, 1)
+
         left.addWidget(self._build_actions())
 
         sidebar = self._build_sidebar()
@@ -212,13 +221,16 @@ class PurchaseWorkbench(QWidget):
 
     def _build_filter_panel(self) -> QWidget:
         panel = self._build_panel_frame("panel")
-        layout = QGridLayout(panel)
-        layout.setContentsMargins(14, 12, 14, 12)
-        layout.setHorizontalSpacing(10)
-        layout.setVerticalSpacing(8)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(14, 12, 14, 10)
+        layout.setSpacing(8)
+
+        # Row 0: filters
+        filter_row = QHBoxLayout()
+        filter_row.setSpacing(10)
 
         self.supplier_filter = QLineEdit()
-        self.supplier_filter.setPlaceholderText("🔍 筛选供应商...")
+        self.supplier_filter.setPlaceholderText("筛选供应商...")
         self.supplier_filter.textChanged.connect(self._refresh_table)
 
         self.type_filter = QComboBox()
@@ -235,13 +247,39 @@ class PurchaseWorkbench(QWidget):
         self.status_filter.addItem("全部状态", "")
         self.status_filter.currentIndexChanged.connect(self._refresh_table)
 
+        reset_button = QPushButton("清除筛选")
+        reset_button.setObjectName("secondaryBtn")
+        reset_button.clicked.connect(self.clear_filters)
+
+        filter_row.addWidget(self.supplier_filter)
+        filter_row.addWidget(self.type_filter)
+        filter_row.addWidget(self.platform_filter)
+        filter_row.addWidget(self.status_filter)
+        filter_row.addWidget(reset_button)
+        layout.addLayout(filter_row)
+
+        # Divider
+        sep = QFrame()
+        sep.setFrameShape(QFrame.Shape.HLine)
+        sep.setStyleSheet("color: #3A3A3E;")
+        sep.setFixedHeight(1)
+        layout.addWidget(sep)
+
+        # Row 1: batch operations
+        batch_label = QLabel("批量操作")
+        batch_label.setObjectName("sectionLabel")
+        layout.addWidget(batch_label)
+
+        batch_row = QHBoxLayout()
+        batch_row.setSpacing(10)
+
         self.fill_platform = QComboBox()
         self.fill_platform.addItem("批量设置平台", "")
         self.fill_platform.addItem("微信", "wechat")
         self.fill_platform.addItem("企业微信", "wxwork")
 
         self.fill_chat = QLineEdit()
-        self.fill_chat.setPlaceholderText("✏️ 批量设置群聊名称")
+        self.fill_chat.setPlaceholderText("批量设置群聊名称")
 
         self.fill_status = QComboBox()
         self.fill_status.addItem("批量设置状态", "")
@@ -251,19 +289,13 @@ class PurchaseWorkbench(QWidget):
         fill_button = QPushButton("应用到勾选")
         fill_button.setObjectName("primaryBtn")
         fill_button.clicked.connect(self.fill_checked_tasks)
-        reset_button = QPushButton("清除筛选")
-        reset_button.setObjectName("secondaryBtn")
-        reset_button.clicked.connect(self.clear_filters)
 
-        layout.addWidget(self.supplier_filter, 0, 0)
-        layout.addWidget(self.type_filter, 0, 1)
-        layout.addWidget(self.platform_filter, 0, 2)
-        layout.addWidget(self.status_filter, 0, 3)
-        layout.addWidget(reset_button, 0, 4)
-        layout.addWidget(self.fill_platform, 1, 0)
-        layout.addWidget(self.fill_chat, 1, 1, 1, 2)
-        layout.addWidget(self.fill_status, 1, 3)
-        layout.addWidget(fill_button, 1, 4)
+        batch_row.addWidget(self.fill_platform)
+        batch_row.addWidget(self.fill_chat, 1)
+        batch_row.addWidget(self.fill_status)
+        batch_row.addWidget(fill_button)
+        layout.addLayout(batch_row)
+
         return panel
 
     def _build_table(self) -> QWidget:
@@ -281,26 +313,42 @@ class PurchaseWorkbench(QWidget):
         self.table.setAlternatingRowColors(True)
         return self.table
 
+    def _build_empty_state(self) -> QWidget:
+        w = QWidget()
+        layout = QVBoxLayout(w)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon = QLabel("拖拽 PDF 文件到此处开始")
+        icon.setObjectName("dropTitle")
+        icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        hint = QLabel("支持 PO、双章合同、对账单")
+        hint.setObjectName("hint")
+        hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addStretch()
+        layout.addWidget(icon)
+        layout.addWidget(hint)
+        layout.addStretch()
+        return w
+
     def _build_actions(self) -> QWidget:
         panel = self._build_panel_frame("panel")
         layout = QHBoxLayout(panel)
-        self.search_button = QPushButton("🔍 搜索并确认发送")
-        self.search_button.setObjectName("primaryBtn")
-        self.search_button.clicked.connect(self.search_selected)
-        self.send_button = QPushButton("📤 直接发送当前群聊")
+        self.send_button = QPushButton("直接发送当前群聊")
         self.send_button.setObjectName("primaryBtn")
         self.send_button.clicked.connect(self.send_selected)
-        self.select_all_button = QPushButton("☑️ 全选")
+        self.search_button = QPushButton("搜索并确认发送")
+        self.search_button.setObjectName("secondaryBtn")
+        self.search_button.clicked.connect(self.search_selected)
+        self.select_all_button = QPushButton("全选")
         self.select_all_button.setObjectName("secondaryBtn")
         self.select_all_button.clicked.connect(self.toggle_all_checked)
-        skip_button = QPushButton("⏭️ 跳过选中")
+        skip_button = QPushButton("跳过选中")
         skip_button.setObjectName("secondaryBtn")
         skip_button.clicked.connect(self.skip_selected)
-        clear_button = QPushButton("🗑️ 清空列表")
-        clear_button.setObjectName("secondaryBtn")
+        clear_button = QPushButton("清空列表")
+        clear_button.setObjectName("dangerButton")
         clear_button.clicked.connect(self.clear_tasks)
-        layout.addWidget(self.search_button)
         layout.addWidget(self.send_button)
+        layout.addWidget(self.search_button)
         layout.addWidget(self.select_all_button)
         layout.addWidget(skip_button)
         layout.addStretch(1)
@@ -313,20 +361,28 @@ class PurchaseWorkbench(QWidget):
         layout = QVBoxLayout(panel)
         layout.setSpacing(12)
 
-        title = QLabel("📋 任务详情")
+        title = QLabel("任务详情")
         title.setObjectName("sectionTitle")
         self.detail_label = QLabel("未选择任务")
         self.detail_label.setObjectName("detailText")
         self.detail_label.setWordWrap(True)
 
-        config_button = QPushButton("⚙️ 打开供应商配置")
+        # Progress bar
+        self._send_progress = QProgressBar()
+        self._send_progress.setTextVisible(True)
+        self._send_progress.setFormat("就绪")
+        self._send_progress.setRange(0, 1)
+        self._send_progress.setValue(0)
+        self._send_progress.setVisible(False)
+
+        config_button = QPushButton("打开供应商配置")
         config_button.setObjectName("secondaryBtn")
         config_button.clicked.connect(lambda: os.startfile(SUPPLIERS_FILE))
-        log_button = QPushButton("📝 打开日志")
+        log_button = QPushButton("打开日志")
         log_button.setObjectName("secondaryBtn")
         log_button.clicked.connect(lambda: os.startfile(LOG_FILE))
 
-        message_title = QLabel("📤 将发送的文字")
+        message_title = QLabel("将发送的文字")
         message_title.setObjectName("sectionTitle")
         self.message_group = QButtonGroup(self)
         message_tabs = QGridLayout()
@@ -357,6 +413,7 @@ class PurchaseWorkbench(QWidget):
 
         layout.addWidget(title)
         layout.addWidget(self.detail_label)
+        layout.addWidget(self._send_progress)
         layout.addWidget(config_button)
         layout.addWidget(log_button)
         layout.addWidget(message_title)
@@ -449,6 +506,13 @@ class PurchaseWorkbench(QWidget):
 
     def _refresh_table(self) -> None:
         visible_tasks = self._visible_tasks()
+
+        # Toggle between table and empty state
+        if not self.tasks:
+            self._table_stack.setCurrentIndex(1)
+            return
+        self._table_stack.setCurrentIndex(0)
+
         self._refresh_filter_options()
         self.table.setRowCount(len(visible_tasks))
         self.table.blockSignals(True)
@@ -689,10 +753,19 @@ class PurchaseWorkbench(QWidget):
         adapter_cls = ADAPTERS.get(task.platform)
         adapter = adapter_cls()
         self._log(f"开始发送：{task.supplier} / {task.chat_name}")
+
+        # Show progress bar
+        total = len(selected)
+        self._send_progress.setVisible(True)
+        self._send_progress.setRange(0, total)
+        self._send_progress.setValue(0)
+        self._send_progress.setFormat(f"发送中 0/{total}")
+
         self._hide_for_desktop_action()
         try:
             if not adapter.activate():
                 self._restore_after_desktop_action()
+                self._send_progress.setVisible(False)
                 self._set_status(selected, "发送失败", "无法激活微信/企业微信窗口。")
                 QMessageBox.critical(self, "发送失败", "无法激活微信/企业微信窗口。")
                 return False
@@ -700,23 +773,27 @@ class PurchaseWorkbench(QWidget):
             message = self._message_for_task(task)
             if not adapter.send_text(message):
                 self._restore_after_desktop_action()
+                self._send_progress.setVisible(False)
                 self._set_status(selected, "发送失败", "文字通知发送失败。")
                 QMessageBox.critical(self, "发送失败", "文字通知发送失败。")
                 return False
 
-            for item in selected:
+            for i, item in enumerate(selected):
                 item.status = "发送中"
                 self._refresh_table()
+                self._send_progress.setValue(i)
+                self._send_progress.setFormat(f"发送中 {i}/{total}")
                 adapter._set_foreground(adapter.hwnd)
                 adapter.send_file(item.path)
-                # 等待文件粘贴完成，避免下一个文件覆盖剪贴板
                 time.sleep(2)
                 item.status = "已发送"
                 item.checked = False
                 item.detail = "发送成功"
                 self._refresh_table()
+                self._send_progress.setValue(i + 1)
         finally:
             self._restore_after_desktop_action()
+            self._send_progress.setVisible(False)
 
         # 再等一下确保所有文件都上传完成，然后才归档
         time.sleep(1)
@@ -850,7 +927,7 @@ class PurchaseWorkbench(QWidget):
         if getattr(self, '_shell', None) is not None and hasattr(self._shell, '_theme_overrides'):
             t.update(self._shell._theme_overrides or {})
         primary = t.get("primary", _PRIMARY)
-        text_c = t.get("text", "#1C1C1E")
+        text_c = t.get("text", "#F5F5F7")
         self.log_box.appendHtml(
             f'<div style="color:{text_c}; padding:2px 0; border-left:3px solid {primary};'
             f'padding-left:6px; margin:1px 0;">{now}  {text}</div>'

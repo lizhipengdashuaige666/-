@@ -17,7 +17,7 @@ from PySide6.QtGui import QColor, QTextCursor, QShortcut, QKeySequence, QPixmap,
 from PySide6.QtWidgets import (
     QAbstractItemView, QButtonGroup,
     QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFrame,
-    QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QLineEdit, QListWidget,
+    QHBoxLayout, QLabel, QLineEdit, QListWidget,
     QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton, QHeaderView,
     QRadioButton, QScrollArea, QSplitter,
     QStackedWidget, QStatusBar, QTableWidget, QTableWidgetItem,
@@ -130,9 +130,9 @@ class ContractRenameApp(QWidget):
                 self._file_sizes[fn] = size_str
                 self._file_times[fn] = datetime.now().strftime("%H:%M")
                 self._file_paths[fn] = Path(p)
-                item = QListWidgetItem(f"{fn}\n{size_str}")
+                item = QListWidgetItem(f"{fn}\n{size_str} · {self._file_times.get(fn, '')}")
                 item.setData(Qt.ItemDataRole.UserRole, "waiting")
-                item.setForeground(QColor(_token(self._shell, "text2", "#6C6C70")))
+                item.setForeground(QColor(_token(self._shell, "text2", "#98989E")))
                 self.file_list.addItem(item)
                 self._file_statuses[fn] = "waiting"
         self._refresh_summary()
@@ -144,17 +144,13 @@ class ContractRenameApp(QWidget):
         card = QFrame()
         card.setObjectName(name)
         card.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        effect = QGraphicsDropShadowEffect(card)
-        effect.setBlurRadius(14)
-        effect.setOffset(0, 6)
-        effect.setColor(QColor(0, 0, 0, 13))
-        card.setGraphicsEffect(effect)
+        _style.apply_shadow(card)
         return card
 
     def _build_ui(self) -> None:
         h_splitter = QSplitter(Qt.Orientation.Horizontal)
         h_splitter.setHandleWidth(6)
-        border_color = _token(self._shell, "border", "#D9D9DF")
+        border_color = _token(self._shell, "border", "#3A3A3E")
         h_splitter.setStyleSheet(f"QSplitter::handle {{ background-color: {border_color}; }}")
 
         left_panel = self._build_left_panel()
@@ -170,6 +166,7 @@ class ContractRenameApp(QWidget):
         root = QHBoxLayout(self)
         root.setContentsMargins(20, 20, 20, 20)
         root.addWidget(h_splitter)
+
 
     # ═══════════════════════════════════════════════════════════════════════
     # LEFT — File queue (340px)
@@ -239,7 +236,7 @@ class ContractRenameApp(QWidget):
 
         v_splitter = QSplitter(Qt.Orientation.Vertical)
         v_splitter.setHandleWidth(6)
-        border_color = _token(self._shell, "border", "#D9D9DF")
+        border_color = _token(self._shell, "border", "#3A3A3E")
         v_splitter.setStyleSheet(f"QSplitter::handle {{ background-color: {border_color}; }}")
         v_splitter.addWidget(self._build_preview_card())
         v_splitter.addWidget(self._build_rename_card())
@@ -323,10 +320,10 @@ class ContractRenameApp(QWidget):
         row_layout.setSpacing(10)
 
         stats = [
-            ("pending", "⏳ 待处理",  "0", _token(self._shell, "text", "#1C1C1E")),
-            ("done",    "✅ 已完成",  "0", _token(self._shell, "success", "#2C6E2F")),
-            ("failed",  "❌ 失败",    "0", _token(self._shell, "danger", "#D33C2C")),
-            ("review",  "✋ 待确认",  "0", _token(self._shell, "primary", "#007AFF")),
+            ("pending", "⏳ 待处理",  "0", _token(self._shell, "text", "#F5F5F7")),
+            ("done",    "✅ 已完成",  "0", _token(self._shell, "success", "#30D158")),
+            ("failed",  "❌ 失败",    "0", _token(self._shell, "danger", "#FF453A")),
+            ("review",  "✋ 待确认",  "0", _token(self._shell, "primary", "#0A84FF")),
         ]
         self._stat_value_labels = {}
 
@@ -389,7 +386,7 @@ class ContractRenameApp(QWidget):
         self.preview_scroll.setWidgetResizable(True)
         self.preview_label = QLabel("📄 合同扫描件预览")
         self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        placeholder_color = _token(self._shell, "text3", "#AEAEB2")
+        placeholder_color = _token(self._shell, "text3", "#6C6C72")
         self.preview_label.setStyleSheet(
             f"font-size: 13px; color: {placeholder_color}; background: transparent; padding: 40px;"
         )
@@ -562,7 +559,7 @@ class ContractRenameApp(QWidget):
         vbox.setSpacing(2)
         lab = QLabel(title)
         lab.setObjectName("sectionLabel")
-        value_label.setStyleSheet(f"font-size: 13px; font-weight: 600; color: {_token(self._shell, 'text', '#1C1C1E')}; background: transparent;")
+        value_label.setStyleSheet(f"font-size: 13px; font-weight: 600; color: {_token(self._shell, 'text', '#F5F5F7')}; background: transparent;")
         value_label.setWordWrap(True)
         vbox.addWidget(lab)
         vbox.addWidget(value_label)
@@ -659,7 +656,7 @@ class ContractRenameApp(QWidget):
             self.next_page_btn.setVisible(self._preview_total > 1)
         except Exception:
             self.preview_label.setText("无法加载 PDF 预览")
-            placeholder_color = _token(self._shell, "text3", "#AEAEB2")
+            placeholder_color = _token(self._shell, "text3", "#6C6C72")
             self.preview_label.setStyleSheet(
                 f"font-size: 13px; color: {placeholder_color}; background: transparent; padding: 40px;"
             )
@@ -689,7 +686,7 @@ class ContractRenameApp(QWidget):
             doc.close()
         except Exception:
             self.preview_label.setText("渲染失败")
-            placeholder_color = _token(self._shell, "text3", "#AEAEB2")
+            placeholder_color = _token(self._shell, "text3", "#6C6C72")
             self.preview_label.setStyleSheet(
                 f"font-size: 13px; color: {placeholder_color}; background: transparent; padding: 40px;"
             )
@@ -1129,9 +1126,9 @@ class ContractRenameApp(QWidget):
             self._file_sizes[name] = size_str
             self._file_times[name] = datetime.now().strftime("%H:%M")
             self._file_paths[name] = Path(full_path)
-            item = QListWidgetItem(f"{name}\n{size_str}")
+            item = QListWidgetItem(f"{name}\n{size_str} · {self._file_times.get(name, '')}")
             item.setData(Qt.ItemDataRole.UserRole, "waiting")
-            item.setForeground(QColor(_token(self._shell, "text2", "#6C6C70")))
+            item.setForeground(QColor(_token(self._shell, "text2", "#98989E")))
             self.file_list.addItem(item)
             self._file_statuses[name] = "waiting"
         self._append_log(f"扫描开始 → 找到 {len(items)} 个 PDF 文件")
@@ -1142,11 +1139,11 @@ class ContractRenameApp(QWidget):
             "pending": "✋", "renaming": "✎", "moving": "→", "queued": "→",
             "done": "✅", "failed": "❌",
         }
-        primary  = _token(self._shell, "primary", "#007AFF")
-        success  = _token(self._shell, "success", "#2C6E2F")
-        warning  = _token(self._shell, "warning", "#E67C00")
-        danger   = _token(self._shell, "danger", "#D33C2C")
-        text2    = _token(self._shell, "text2", "#6C6C70")
+        primary  = _token(self._shell, "primary", "#0A84FF")
+        success  = _token(self._shell, "success", "#30D158")
+        warning  = _token(self._shell, "warning", "#FF9F0A")
+        danger   = _token(self._shell, "danger", "#FF453A")
+        text2    = _token(self._shell, "text2", "#98989E")
         colors = {
             "waiting": text2, "scanning": primary, "ocr": primary,
             "extracting": primary, "pending": warning, "renaming": primary,
@@ -1160,7 +1157,7 @@ class ContractRenameApp(QWidget):
             item = self.file_list.item(i)
             if item and filename in item.text():
                 item.setData(Qt.ItemDataRole.UserRole, status)
-                item.setText(f"{icon}  {filename}\n     {size}")
+                item.setText(f"{icon}  {filename}\n     {size} · {self._file_times.get(filename, '')}")
                 item.setForeground(QColor(color))
                 self._file_statuses[filename] = status
                 if status == "pending":
@@ -1266,10 +1263,10 @@ class ContractRenameApp(QWidget):
 
     def _append_log(self, msg: str, is_error: bool = False) -> None:
         ts = datetime.now().strftime("%H:%M:%S")
-        primary = _token(self._shell, "primary", "#007AFF")
-        danger  = _token(self._shell, "danger", "#D33C2C")
-        err_bg  = _token(self._shell, "err_bg", "#FFECEA")
-        text_c  = _token(self._shell, "text", "#1C1C1E")
+        primary = _token(self._shell, "primary", "#0A84FF")
+        danger  = _token(self._shell, "danger", "#FF453A")
+        err_bg  = _token(self._shell, "err_bg", "#3D1C1A")
+        text_c  = _token(self._shell, "text", "#F5F5F7")
         if is_error:
             html = (f'<div style="background:{err_bg}; color:{danger}; padding:3px 6px; '
                     f'border-left:3px solid {danger}; margin:1px 0; border-radius:4px;">'
@@ -1301,7 +1298,7 @@ class ContractRenameApp(QWidget):
         self._ocr_conf_pill.setText("-")
         self._current_pdf_path = None
         self.preview_label.setText("从左侧文件队列选择文件后显示预览")
-        placeholder_color = _token(self._shell, "text3", "#AEAEB2")
+        placeholder_color = _token(self._shell, "text3", "#6C6C72")
         self.preview_label.setStyleSheet(
             f"font-size: 12px; color: {placeholder_color}; background: transparent; padding: 30px;"
         )

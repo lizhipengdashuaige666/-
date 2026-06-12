@@ -10,15 +10,18 @@ from PySide6.QtWidgets import (
     QStackedWidget, QVBoxLayout, QWidget,
 )
 
-# 添加两个子项目的路径
-_NAMING_PROJECT = Path(r"C:\Users\19811\.claude\projects\pdf-windows-11-python-3-12")
-_WORKBENCH_PROJECT = Path(r"C:\Users\19811\.claude\projects\wechat-wxwork-text-purchase-workbench-main")
+# 添加两个子项目的路径（相对 shell.py 所在目录的兄弟项目）
+_HERE = Path(__file__).resolve().parent.parent  # unified-purchase-tool/
+_PROJECTS = _HERE.parent  # .claude/projects/
+_NAMING_PROJECT = _PROJECTS / "pdf-windows-11-python-3-12"
+_WORKBENCH_PROJECT = _PROJECTS / "wechat-wxwork-text-purchase-workbench-main"
 sys.path.insert(0, str(_NAMING_PROJECT))
 sys.path.insert(0, str(_WORKBENCH_PROJECT))
 
 from app.config import load_config
 from app.gui import ContractRenameApp
 from gui.app import PurchaseWorkbench
+from unified.watermark_app import WatermarkApp
 
 from unified import style
 
@@ -44,8 +47,10 @@ class UnifiedApp(QMainWindow):
         self.stack.setStyleSheet(f"background: {style.BG};")
         self.rename_page = ContractRenameApp(self.naming_config, parent=self, shell=self)
         self.workbench_page = PurchaseWorkbench(parent=self, shell=self)
+        self.watermark_page = WatermarkApp(parent=self, shell=self)
         self.stack.addWidget(self.rename_page)     # index 0
         self.stack.addWidget(self.workbench_page)  # index 1
+        self.stack.addWidget(self.watermark_page)   # index 2
 
         # ── 侧栏 ──
         self._nav_buttons: list[QPushButton] = []
@@ -74,7 +79,7 @@ class UnifiedApp(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        title = QLabel("📂 采购工作台")
+        title = QLabel("采购工作台")
         title.setObjectName("appTitle")
         layout.addWidget(title)
 
@@ -83,8 +88,9 @@ class UnifiedApp(QMainWindow):
         layout.addWidget(section)
 
         nav_items = [
-            ("📄 合同命名", "PDF 合同自动识别与重命名"),
-            ("📤 合同、对账发送台", "合同与对账单发送到供应商群聊"),
+            ("合同命名", "PDF 合同自动识别与重命名"),
+            ("合同发送台", "合同与对账单发送到供应商群聊"),
+            ("水单识别", "银行付款水单自动识别与记账"),
         ]
         for i, (name, desc) in enumerate(nav_items):
             btn = QPushButton(name)
