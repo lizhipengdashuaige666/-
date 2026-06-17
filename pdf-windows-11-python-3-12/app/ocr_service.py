@@ -1,28 +1,11 @@
 from __future__ import annotations
 
-import os
-
-# 必须在 import paddle 之前设置，禁用 oneDNN 和 PIR 引擎
-os.environ["FLAGS_use_mkldnn"] = "0"
-os.environ["FLAGS_use_onednn"] = "0"
-os.environ["FLAGS_enable_pir_api"] = "0"
-os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
-
 from collections.abc import Iterable
 from typing import Any
 
-# 延迟导入 PaddleOCR，加速模块加载
-_PaddleOCR = None
-
-
-def _get_paddleocr():
-    global _PaddleOCR
-    if _PaddleOCR is None:
-        from paddleocr import PaddleOCR as _PaddleOCR
-    return _PaddleOCR
-
-
 import numpy as np
+
+from unified.ocr import get_engine
 
 from app.models import OCRResult, OCRTextLine
 
@@ -43,36 +26,13 @@ class PaddleOCRService:
         return self._engine
 
     def _build_engine(self) -> Any:
-        """只在首次使用时初始化，避免启动时阻塞。"""
-
+        """获取共享的 PaddleOCR 引擎（移动端模型）。"""
         try:
-            import paddle
-            paddle.set_flags({"FLAGS_use_mkldnn": False})
-            paddle.set_flags({"FLAGS_use_onednn": False})
-        except Exception:
-            pass
-
-        try:
-            PaddleOCR = _get_paddleocr()
+            return get_engine()
         except ImportError as exc:
             raise OCRServiceError(
                 "未安装 PaddleOCR。请先根据 README 安装 requirements.txt 中的依赖。"
             ) from exc
-
-        return PaddleOCR(lang=self.lang,
-            use_doc_orientation_classify=False,
-            use_doc_unwarping=False,
-            use_textline_orientation=False,
-
-            text_detection_model_name="PP-OCRv5_mobile_det",
-            text_det_limit_side_len=960,
-            text_det_limit_type="min",
-            text_det_thresh=0.3,
-
-            text_recognition_model_name="PP-OCRv5_mobile_rec",
-
-            text_rec_score_thresh=0.5,
-        )
 
     def recognize(self, image: np.ndarray) -> OCRResult:
         """直接接收 numpy 数组 (H, W, 3) RGB。"""

@@ -37,6 +37,8 @@ class VendorCache:
     # ------------------------------------------------------------------
     # 精确匹配：全文包含供应商名或别名
     # ------------------------------------------------------------------
+    MIN_NAME_LENGTH = 2  # 单字简称太容易误匹配（如"票"在"发票"中）
+
     def match_text(self, text: str) -> VendorCacheMatch | None:
         normalized_text = self._normalize(text)
         best_entry: dict[str, object] | None = None
@@ -47,11 +49,10 @@ class VendorCache:
             if not names:
                 continue
 
-            if any(name and name in normalized_text for name in names):
-                score = max(len(name) for name in names)
-                if score > best_score:
-                    best_entry = entry
-                    best_score = score
+            match_len = self._longest_contained_name(names, normalized_text)
+            if match_len >= self.MIN_NAME_LENGTH and match_len > best_score:
+                best_entry = entry
+                best_score = match_len
 
         if not best_entry:
             return None
@@ -137,6 +138,8 @@ class VendorCache:
         normalized_short = self._normalize(vendor_short_name)
         if not normalized_name or not normalized_short:
             return
+        if len(normalized_short) < self.MIN_NAME_LENGTH:
+            return
         if self._is_generic_alias(normalized_short):
             return
 
@@ -198,6 +201,15 @@ class VendorCache:
             for name in raw
             if name and not self._is_generic_alias(self._normalize(name))
         ]
+
+    def _longest_contained_name(self, names: list[str], text: str) -> int:
+        """返回 names 中最长的被 text 包含的名字长度，无匹配返回 0。"""
+        best = 0
+        for name in names:
+            if name and len(name) >= self.MIN_NAME_LENGTH and name in text:
+                if len(name) > best:
+                    best = len(name)
+        return best
 
     def _load(self) -> dict[str, object]:
         if not self.cache_path.exists():

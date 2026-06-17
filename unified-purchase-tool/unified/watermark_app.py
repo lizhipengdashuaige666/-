@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """水单自动识别与记账工具 — PySide6 版本。
 
-支持文本型/扫描件 PDF，多笔汇款记录批量提取，结果追加写入 已付款.xlsx。
+支持文本型/扫描件 PDF，多笔汇款记录批量提取，结果追加写入水单明细.xlsx。
+OCR 使用 PaddleOCR（移动端模型，pdfplumber 优先）。
 """
 
 from __future__ import annotations
@@ -24,68 +25,60 @@ from PySide6.QtWidgets import (
 )
 
 from unified import style as _style
+from unified.ocr import ocr_text_from_pdf
 
-try:
-    import pypdfium2 as pdfium
-    import pytesseract
-    from PIL import Image, ImageEnhance
-    OCR_AVAILABLE = True
-except ImportError:
-    OCR_AVAILABLE = False
-
-_EXCEL_DIR = os.path.dirname(os.path.abspath(
-    sys.executable if getattr(sys, 'frozen', False) else __file__))
-DEFAULT_EXCEL_PATH = os.path.join(_EXCEL_DIR, "已付款.xlsx")
+DEFAULT_EXCEL_PATH = r"D:\采购工作\采购订单\已发\水单明细.xlsx"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Business logic (unchanged)
+# Extraction helpers
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _ocr_page(page, scale=5):
-    bitmap = page.render(scale=scale)
-    img = bitmap.to_pil().convert("L")
-    enhancer = ImageEnhance.Contrast(img)
-    return enhancer.enhance(2.0)
+MATERIAL_KEYWORDS = [
+    "物料", "货款", "采购", "材料", "原料", "零件", "配件",
+    "生产", "产品", "货品", "商品", "加工", "模具", "治具",
+]
 
 
-def _ocr_text_from_pdf(pdf_path):
-    if not OCR_AVAILABLE:
-        raise RuntimeError("OCR 依赖未安装（pypdfium2, pytesseract, Pillow）")
-    pdf = pdfium.PdfDocument(pdf_path)
-    parts = [_ocr_page(pdf[i]) for i in range(len(pdf))]
-    return "\n".join(pytesseract.image_to_string(p, lang="chi_sim+eng", config="--psm 4")
-                     for p in parts)
+def _match_material(summary_text):
+    if not summary_text:
+        return False
+    for kw in MATERIAL_KEYWORDS:
+        if kw in summary_text:
+            return True
+    return False
 
 
-def _extract_supplier_from_segment(segment, payer_accounts):
-    supplier = None
-    payee_account = None
-    acct_matches = list(re.finditer(r'(?<!\d)(\d{8,25})(?!\d)', segment))
-    candidates = []
-    for m in acct_matches:
-        a = m.group(1)
-        if a in payer_accounts or len(a) == 8:
-            continue
-        if len(a) >= 16 and re.match(r'20\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d+', a):
-            continue
-        candidates.append((m.start(), a))
-    if not candidates:
-        return None, None
-    acct_pos, payee_account = candidates[-1]
-    tail = segment[acct_pos + len(payee_account):]
-    cleaned = re.sub(r'^[\sA-Za-z\[\]:：,.·\-_]{1,20}(?=[一-鿿]|[A-Z][a-z]{2,})', '', tail)
-    cn_text = re.findall(r'[一-鿿A-Za-z0-9]{2,}', cleaned[:80])
-    if cn_text:
-        raw = cn_text[0][:30].strip()
-        raw = re.sub(r'[a-zA-Z\[\]]+$', '', raw).strip()
-        if len(raw) >= 2:
-            supplier = raw
-    return supplier, payee_account
+def _extract_supplier(text):
+    """从文本中提取收款人名称。"""
+    m = re.search(r"收款人[：:]?\s*(\S+)", text)
+    if m:
+        name = re.split(r'[②④⑤⑥⑦⑧⑨CMB]+', m.group(1))[0]
+        name = re.sub(r'[a-zA-Z\[\]]+$', '', name).strip()
+        if len(name) >= 2:
+            return name
+    return None
+
+
+def _extract_payee_account(text):
+    """提取收款账号（第一个出现在'收款账号'后面的非付款账号长数字）。"""
+    for m in re.finditer(r"收款账号[：:]?\s*(\d{8,25})", text):
+        return m.group(1)
+    return None
+
+
+def _extract_summary(segment):
+    m = re.search(r"交易摘要[：:]?\s*(\S+)", segment)
+    if m:
+        val = re.split(r'[②④⑤⑥⑦⑧⑨]', m.group(1))[0]
+        val = re.sub(r'[a-zA-Z\[\]]+$', '', val).strip()
+        if len(val) >= 2:
+            return val
+    return None
 
 
 def _clean_amount(raw, fix_map=None):
-    s = re.sub(r"\s+", "", raw).replace(",", "")
+    s = re.sub(r"\s+", "", raw).replace(",", "").replace("，", "")
     try:
         return float(s)
     except ValueError:
@@ -103,20 +96,27 @@ def _clean_amount(raw, fix_map=None):
     raise ValueError(f"无法解析金额: {raw}")
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Core extraction
+# ═══════════════════════════════════════════════════════════════════════════
+
 def _extract_records_from_text(text, pdf_path):
     records = []
     text = re.sub(r"\s+", " ", text)
-    amount_pattern = re.compile(r"[+＋]?\s*CNY\s*([\d,\sIOloSZBi]+\.\s?\d{2})", re.IGNORECASE)
+
+    # 匹配 CNY 金额行（支持各种括号和分隔符）
+    amount_pattern = re.compile(
+        r"(?:交易金额[（(]小写[)）]\s*[:：]\s*)?CNY\s*([\d,\s，OIlZSBi]+\.\s?\d{2})",
+        re.IGNORECASE,
+    )
     amounts = list(amount_pattern.finditer(text))
     if not amounts:
         return records
 
+    # 提取付款人账号（用于排除）
     payer_accounts = set()
-    for m in re.finditer(r"(?:ATR?U?[KkB]S?\s*[:-]?\s*)(\d{8,})", text):
+    for m in re.finditer(r"付款账号[：:]?\s*(\d{8,})", text):
         payer_accounts.add(m.group(1))
-    m_fn = re.search(r"(\d{10,})", os.path.basename(pdf_path))
-    if m_fn:
-        payer_accounts.add(m_fn.group(1))
 
     global_date = datetime.today().strftime("%Y-%m-%d")
     for dm in re.finditer(r"(\d{4}[/-]\d{2}[/-]\d{2})", text):
@@ -129,44 +129,56 @@ def _extract_records_from_text(text, pdf_path):
     amount_positions = [0] + [am.end() for am in amounts]
     for i, am in enumerate(amounts):
         try:
-            amount = _clean_amount(am.group(1))
+            amount_val = _clean_amount(am.group(1))
         except ValueError:
             continue
+
         seg_start = amount_positions[i]
         seg_end = am.start()
         segment = text[seg_start:seg_end]
-        supplier, payee_account = _extract_supplier_from_segment(segment, payer_accounts)
-        if not supplier:
-            before = text[max(0, am.start() - 600):am.start()]
-            supplier, payee_account = _extract_supplier_from_segment(before, payer_accounts)
-        rec_date = None
+        after_start = am.end()
+        after_end = amounts[i + 1].start() if i + 1 < len(amounts) else len(text)
+        after_segment = text[after_start:after_end]
+
+        # 在金额前后 1000 字符范围内搜索字段
+        context = text[max(0, am.start() - 1000):min(len(text), am.end() + 500)]
+
+        supplier = _extract_supplier(context)
+        payee_account = _extract_payee_account(context)
+
+        rec_date = global_date
         for dm in re.finditer(r"(\d{4}[/-]\d{2}[/-]\d{2})", segment):
             try:
                 rec_date = dm.group(1).replace("/", "-")
                 break
             except Exception:
                 pass
-        if not rec_date:
-            rec_date = global_date
-        after_start = am.end()
-        after_end = amounts[i + 1].start() if i + 1 < len(amounts) else len(text)
-        after_segment = text[after_start:after_end]
+
         txn_id = None
-        m_txn = re.search(r"(\d{8}\d{10,})", after_segment)
+        m_txn = re.search(r"业务参考号[：:]?\s*(\d{8}\d{10,})", text)
+        if not m_txn:
+            m_txn = re.search(r"(\d{8}\d{10,})", after_segment)
         if m_txn:
             raw_txn = m_txn.group(1)
             try:
-                y, mth, d = int(raw_txn[:4]), int(raw_txn[4:6]), int(raw_txn[6:8])
-                if 2020 <= y <= 2030 and 1 <= mth <= 12 and 1 <= d <= 31:
+                y_val, mth, d = int(raw_txn[:4]), int(raw_txn[4:6]), int(raw_txn[6:8])
+                if 2020 <= y_val <= 2030 and 1 <= mth <= 12 and 1 <= d <= 31:
                     txn_id = raw_txn
             except Exception:
                 txn_id = raw_txn
+
         if not supplier and payee_account:
             supplier = f"(收款账号 {payee_account[-6:]})"
+
+        summary = _extract_summary(segment) or _extract_summary(after_segment) or _extract_summary(context)
+
+        if not _match_material(summary):
+            continue
+
         records.append({
-            "amount": amount, "supplier": supplier,
+            "amount": amount_val, "supplier": supplier,
             "payee_account": payee_account, "date": rec_date,
-            "txn_id": txn_id,
+            "txn_id": txn_id, "summary": summary,
         })
     return records
 
@@ -183,22 +195,24 @@ def extract_info_from_pdf(pdf_path):
         text_parts = []
     if text_parts:
         full_text = "\n".join(text_parts)
-    elif OCR_AVAILABLE:
-        try:
-            full_text = _ocr_text_from_pdf(pdf_path)
-        except Exception as e:
-            raise RuntimeError(f"OCR识别失败: {e}")
     else:
-        raise RuntimeError("该PDF为扫描件且OCR依赖未安装，无法识别。")
+        try:
+            full_text = ocr_text_from_pdf(pdf_path)
+        except Exception as e:
+            raise RuntimeError(f"PaddleOCR识别失败: {e}")
     if not full_text.strip():
         raise RuntimeError("PDF内容为空，无法提取信息。")
     return _extract_records_from_text(full_text, pdf_path)
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Excel output
+# ═══════════════════════════════════════════════════════════════════════════
+
 def append_to_excel(records, excel_path=None):
     if excel_path is None:
         excel_path = DEFAULT_EXCEL_PATH
-    headers = ["识别日期", "付款日期", "供应商", "收款账号", "付款金额", "源文件名", "交易流水号"]
+    headers = ["识别日期", "付款日期", "供应商", "收款账号", "付款金额", "交易摘要", "源文件名", "交易流水号"]
     today = datetime.today().strftime("%Y-%m-%d")
     if not os.path.exists(excel_path):
         wb = Workbook()
@@ -215,8 +229,8 @@ def append_to_excel(records, excel_path=None):
                     missing = len(headers) - len(row)
                     for _ in range(missing):
                         row[-1].offset(column=1).value = None
-                for i, h in enumerate(headers, 1):
-                    ws.cell(row=1, column=i, value=h)
+                for i_val, h in enumerate(headers, 1):
+                    ws.cell(row=1, column=i_val, value=h)
         else:
             ws = wb.create_sheet("已付款")
             ws.append(headers)
@@ -225,6 +239,7 @@ def append_to_excel(records, excel_path=None):
             today, rec.get("date") or "未识别",
             rec.get("supplier") or "未识别", rec.get("payee_account") or "",
             f"{rec['amount']:.2f}" if rec.get("amount") is not None else "未识别",
+            rec.get("summary") or "",
             rec.get("filename", ""), rec.get("txn_id") or "",
         ])
     for col_cells in ws.columns:
@@ -256,16 +271,14 @@ class WatermarkApp(QWidget):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)
 
-        # Header
         header = QLabel("水单自动识别")
         header.setObjectName("toolbarTitle")
         subtitle = QLabel("将银行付款水单 PDF 拖入窗口自动识别汇款记录\n"
-                          "支持文本型 PDF 及扫描件 OCR | 每份 PDF 提取全部汇款记录")
+                          "仅写入匹配物料关键词的记录 | PaddleOCR 移动端 | pdfplumber 优先")
         subtitle.setObjectName("toolbarSubtitle")
         layout.addWidget(header)
         layout.addWidget(subtitle)
 
-        # File list
         list_card = QFrame()
         list_card.setObjectName("card")
         lc = QVBoxLayout(list_card)
@@ -293,7 +306,6 @@ class WatermarkApp(QWidget):
 
         layout.addWidget(list_card, 1)
 
-        # Buttons
         btn_row = QHBoxLayout()
         btn_row.setSpacing(10)
 
@@ -315,7 +327,6 @@ class WatermarkApp(QWidget):
         btn_row.addStretch()
         layout.addLayout(btn_row)
 
-        # Status
         self._status = QLabel("就绪")
         self._status.setObjectName("sideSubtitle")
         layout.addWidget(self._status)
@@ -377,7 +388,7 @@ class WatermarkApp(QWidget):
                     rec["filename"] = fname
                 all_records.extend(records)
                 if not records:
-                    errors.append(f"{fname} — 未提取到任何记录")
+                    errors.append(f"{fname} — 未提取到物料记录")
             except Exception:
                 errors.append(f"{fname} — "
                               f"{traceback.format_exc().strip().split(chr(10))[-1]}")
@@ -392,14 +403,13 @@ class WatermarkApp(QWidget):
         self.setCursor(Qt.CursorShape.ArrowCursor)
         self.clear_list()
 
-        summary = f"成功写入 {len(all_records)} 条记录到 已付款.xlsx"
+        summary = f"成功写入 {len(all_records)} 条物料记录到水单明细"
         if errors:
             detail = "\n".join(errors[-8:])
             summary += f"\n\n{len(errors)} 个问题:\n{detail}"
         self._status.setText(summary.split("\n")[0])
         QMessageBox.information(self, "完成", summary)
 
-    # Drag & drop
     def dragEnterEvent(self, event) -> None:
         if event.mimeData().hasUrls():
             event.acceptProposedAction()

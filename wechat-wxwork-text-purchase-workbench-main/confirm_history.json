@@ -3,7 +3,7 @@
     "supplier": "万一",
     "platform": "wechat",
     "chat_name": "里博安侣商务沟通",
-    "count": 1
+    "count": 2
   },
   "中易达\nwechat\n安侣中易达订单群": {
     "supplier": "中易达",
@@ -15,7 +15,7 @@
     "supplier": "乐勤",
     "platform": "wechat",
     "chat_name": "乐勤采购沟通群",
-    "count": 1
+    "count": 3
   },
   "激埃特\nwechat\n安侣-激埃特采购沟通群": {
     "supplier": "激埃特",
@@ -39,6 +39,132 @@
     "supplier": "品鑫",
     "platform": "wechat",
     "chat_name": "品鑫明纬电源采购群",
+    "count": 1
+  },
+  "锦众\nwechat\n安侣锦众对账群": {
+    "supplier": "锦众",
+    "platform": "wechat",
+    "chat_name": "安侣锦众对账群",
+    "count": 2
+  },
+  "强毅\nwechat\n安侣-强毅双面胶贴膜采购群": {
+    "supplier": "强毅",
+    "platform": "wechat",
+    "chat_name": "安侣-强毅双面胶贴膜采购群",
+    "count": 2
+  },
+  "林吉源\nwechat\n安侣 林吉源 品质交付沟通群": {
+    "supplier": "林吉源",
+    "platform": "wechat",
+    "chat_name": "安侣 林吉源 品质交付沟通群",
+    "count": 3
+  },
+  "东驰\nwechat\n东驰-安侣采购沟通群": {
+    "supplier": "东驰",
+    "platform": "wechat",
+    "chat_name": "东驰-安侣采购沟通群",
+    "count": 1
+  },
+  "明达康\nwechat\n明达康显示屏采购沟通群": {
+    "supplier": "明达康",
+    "platform": "wechat",
+    "chat_name": "明达康显示屏采购沟通群",
+    "count": 1
+  },
+  "合川\nwechat\n安侣=合川对账沟通群": {
+    "supplier": "合川",
+    "platform": "wechat",
+    "chat_name": "安侣=合川对账沟通群",
+    "count": 1
+  },
+  "宝印达\nwechat\n友发（宝印达）-安侣采购沟通群": {
+    "supplier": "宝印达",
+    "platform": "wechat",
+    "chat_name": "友发（宝印达）-安侣采购沟通群",
+    "count": 1
+  },
+  "科普\nwechat\n科普采购沟通群": {
+    "supplier": "科普",
+    "platform": "wechat",
+    "chat_name": "科普采购沟通群",
+    "count": 2
+  },
+  "恒志\nwxwork\n安侣-恒志采购沟通群": {
+    "supplier": "恒志",
+    "platform": "wxwork",
+    "chat_name": "安侣-恒志采购沟通群",
+    "count": 1
+  },
+  "祥料\nwechat\n安侣-祥科沟通交流群": {
+    "supplier": "祥料",
+    "platform": "wechat",
+    "chat_name": "安侣-祥科沟通交流群",
+    "count": 1
+  },
+  "智昂\nwxwork\n安侣-智昂沟通群": {
+    "supplier": "智昂",
+    "platform": "wxwork",
+    "chat_name": "安侣-智昂沟通群",
+    "count": 1
+  },
+  "元汇\nwechat\n元汇": {
+    "supplier": "元汇",
+    "platform": "wechat",
+    "chat_name": "元汇",
+    "count": 1
+  },
+  "创擎\nwechat\n创擎安侣钣金采购群": {
+    "supplier": "创擎",
+    "platform": "wechat",
+    "chat_name": "创擎安侣钣金采购群",
+    "count": 1
+  },
+  "复基源诺\nwechat\n安侣-复基源诺采购沟通群": {
+    "supplier": "复基源诺",
+    "platform": "wechat",
+    "chat_name": "安侣-复基源诺采购沟通群",
+    "count": 1
+  },
+  "嘉润\nwechat\n安侣嘉润采购沟通群": {
+    "supplier": "嘉润",
+    "platform": "wechat",
+    "chat_name": "安侣嘉润采购沟通群",
+    "count": 1
+  },
+  "洁特\nwechat\n洁特-安侣对账开票沟通": {
+    "supplier": "洁特",
+    "platform": "wechat",
+    "chat_name": "洁特-安侣对账开票沟通",
+    "count": 1
+  },
+  "炜豪兴\nwechat\n安侣-炜豪兴": {
+    "supplier": "炜豪兴",
+    "platform": "wechat",
+    "chat_name": "安侣-炜豪兴",
+    "count": 1
+  },
+  "炜煌\nwxwork\n安侣炜煌打印机采购群": {
+    "supplier": "炜煌",
+    "platform": "wxwork",
+    "chat_name": "安侣炜煌打印机采购群",
+    "count": 1
+  },
+  "祥科\nwechat\n安侣-祥科沟通交流群": {
+    "supplier": "祥科",
+    "platform": "wechat",
+    "chat_name": "安侣-祥科沟通交流群",
+    "count": 1
+  },
+  "言必信\nwxwork\n安侣-言必信滤波器采购沟通群": {
+    "supplier": "言必信",
+    "platform": "wxwork",
+    "chat_name": "安侣-言必信滤波器采购沟通群",
+    "count": 1
+  },
+  "亿博特\nwxwork\n安侣-亿博特-相机保护罩采购沟通": {
+    "supplier": "亿博特",
+    "platform": "wxwork",
+    "chat_name": "安侣-亿博特-相机保护罩采购沟通",
     "count": 1
   }
 }

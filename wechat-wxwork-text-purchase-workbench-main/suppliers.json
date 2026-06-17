@@ -1,7 +1,17 @@
 {
+  "一昊": {
+    "platform": "wechat",
+    "chat_name": "安侣一昊全夹具沟通群",
+    "delivery_type": "instrument"
+  },
   "万一": {
     "platform": "wechat",
     "chat_name": "里博安侣商务沟通",
+    "delivery_type": "instrument"
+  },
+  "东驰": {
+    "platform": "wechat",
+    "chat_name": "东驰-安侣采购沟通群",
     "delivery_type": "instrument"
   },
   "中易达": {
@@ -14,9 +24,89 @@
     "chat_name": "乐勤采购沟通群",
     "delivery_type": "instrument"
   },
+  "亿博特": {
+    "platform": "wxwork",
+    "chat_name": "安侣-亿博特-相机保护罩采购沟通",
+    "delivery_type": "instrument"
+  },
+  "今楚": {
+    "platform": "wechat",
+    "chat_name": "今楚-安侣采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "佳通成": {
+    "platform": "wechat",
+    "chat_name": "佳通成-安侣",
+    "delivery_type": "instrument"
+  },
+  "元汇": {
+    "platform": "wechat",
+    "chat_name": "元汇",
+    "delivery_type": "instrument"
+  },
+  "创擎": {
+    "platform": "wechat",
+    "chat_name": "创擎安侣钣金采购群",
+    "delivery_type": "instrument"
+  },
+  "升博精密器械": {
+    "platform": "wechat",
+    "chat_name": "安侣-升博精密器械采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "合川": {
+    "platform": "wechat",
+    "chat_name": "安侣=合川对账沟通群",
+    "delivery_type": "reagent"
+  },
   "品鑫": {
     "platform": "wechat",
     "chat_name": "品鑫明纬电源采购群",
+    "delivery_type": "instrument"
+  },
+  "响之震": {
+    "platform": "wechat",
+    "chat_name": "安侣-响之震采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "嘉润": {
+    "platform": "wechat",
+    "chat_name": "安侣嘉润采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "圣贝": {
+    "platform": "wechat",
+    "chat_name": "安侣圣贝扫描模块采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "复基源诺": {
+    "platform": "wechat",
+    "chat_name": "安侣-复基源诺采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "天汉五金": {
+    "platform": "wechat",
+    "chat_name": "安侣-天汉五金采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "宝印达": {
+    "platform": "wechat",
+    "chat_name": "友发（宝印达）-安侣采购沟通群",
+    "delivery_type": "reagent"
+  },
+  "强毅": {
+    "platform": "wechat",
+    "chat_name": "安侣-强毅双面胶贴膜采购群",
+    "delivery_type": "reagent"
+  },
+  "恒志": {
+    "platform": "wxwork",
+    "chat_name": "安侣-恒志采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "恒洋光学": {
+    "platform": "wechat",
+    "chat_name": "深圳安侣医学-恒洋光学",
     "delivery_type": "instrument"
   },
   "恒辉达": {
@@ -24,9 +114,59 @@
     "chat_name": "安侣-恒辉达采购沟通群",
     "delivery_type": "instrument"
   },
+  "扇壹": {
+    "platform": "wechat",
+    "chat_name": "安侣-扇壹采购沟通群",
+    "delivery_type": "instrument"
+  },
   "捷通": {
     "platform": "wxwork",
     "chat_name": "安侣-捷通印刷采购沟通群",
+    "delivery_type": "reagent"
+  },
+  "新连欣": {
+    "platform": "wechat",
+    "chat_name": "安侣-新连欣(交期沟通)",
+    "delivery_type": "instrument"
+  },
+  "明达康": {
+    "platform": "wechat",
+    "chat_name": "明达康显示屏采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "智昂": {
+    "platform": "wxwork",
+    "chat_name": "安侣-智昂沟通群",
+    "delivery_type": "instrument"
+  },
+  "林吉源": {
+    "platform": "wechat",
+    "chat_name": "安侣 林吉源 品质交付沟通群",
+    "delivery_type": "reagent"
+  },
+  "格瑞特": {
+    "platform": "wechat",
+    "chat_name": "安侣-格瑞特",
+    "delivery_type": "instrument"
+  },
+  "欣为": {
+    "platform": "wechat",
+    "chat_name": "欣为-安侣业务群",
+    "delivery_type": "instrument"
+  },
+  "永嘉": {
+    "platform": "wechat",
+    "chat_name": "永嘉-安侣的采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "洁特": {
+    "platform": "wechat",
+    "chat_name": "洁特-安侣对账开票沟通",
+    "delivery_type": "instrument"
+  },
+  "深圳钜博电源": {
+    "platform": "wechat",
+    "chat_name": "深圳安侣医学-深圳钜博电源",
     "delivery_type": "instrument"
   },
   "激埃特": {
@@ -34,9 +174,184 @@
     "chat_name": "安侣-激埃特采购沟通群",
     "delivery_type": "instrument"
   },
+  "灿蓝": {
+    "platform": "wechat",
+    "chat_name": "安侣~灿蓝交付沟通群",
+    "delivery_type": "instrument"
+  },
+  "炜煌": {
+    "platform": "wxwork",
+    "chat_name": "安侣炜煌打印机采购群",
+    "delivery_type": "instrument"
+  },
+  "炜豪兴": {
+    "platform": "wechat",
+    "chat_name": "安侣-炜豪兴",
+    "delivery_type": "instrument"
+  },
+  "爱津生物": {
+    "platform": "wechat",
+    "chat_name": "安侣-爱津生物采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "爱笃": {
+    "platform": "wechat",
+    "chat_name": "安侣-爱笃电源板采购群",
+    "delivery_type": "instrument"
+  },
+  "环立": {
+    "platform": "wechat",
+    "chat_name": "安侣-环立沟通群",
+    "delivery_type": "instrument"
+  },
+  "瑞宝": {
+    "platform": "wechat",
+    "chat_name": "安侣-瑞宝交付技术沟通群",
+    "delivery_type": "instrument"
+  },
+  "瑞祺贝": {
+    "platform": "wechat",
+    "chat_name": "安侣-瑞祺贝采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "生工": {
+    "platform": "wechat",
+    "chat_name": "安侣-生工对账群",
+    "delivery_type": "instrument"
+  },
+  "田川": {
+    "platform": "wechat",
+    "chat_name": "安侣医学-田川订单对接",
+    "delivery_type": "instrument"
+  },
+  "益滤": {
+    "platform": "wechat",
+    "chat_name": "深圳安侣医学沟通群-益滤",
+    "delivery_type": "instrument"
+  },
+  "研浩机电": {
+    "platform": "wechat",
+    "chat_name": "安侣-研浩机电采购沟通群",
+    "delivery_type": "instrument"
+  },
   "示例供应商": {
     "platform": "wxwork",
     "chat_name": "示例供应商采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "祥料": {
+    "platform": "wechat",
+    "chat_name": "安侣-祥科沟通交流群",
+    "delivery_type": "instrument"
+  },
+  "祥科": {
+    "platform": "wechat",
+    "chat_name": "安侣-祥科沟通交流群",
+    "delivery_type": "instrument"
+  },
+  "科普": {
+    "platform": "wechat",
+    "chat_name": "科普采购沟通群",
+    "delivery_type": "reagent"
+  },
+  "科普特": {
+    "platform": "wechat",
+    "chat_name": "科普特-安侣采购交付沟通群",
+    "delivery_type": "instrument"
+  },
+  "策颂": {
+    "platform": "wechat",
+    "chat_name": "安侣-策颂（环保橡胶机脚垫）采购",
+    "delivery_type": "instrument"
+  },
+  "美佰力": {
+    "platform": "wechat",
+    "chat_name": "安侣美佰力合同采购沟通",
+    "delivery_type": "instrument"
+  },
+  "群安仪器": {
+    "platform": "wechat",
+    "chat_name": "安侣_群安仪器沟通群",
+    "delivery_type": "instrument"
+  },
+  "航嘉": {
+    "platform": "wechat",
+    "chat_name": "安侣医学-航嘉",
+    "delivery_type": "instrument"
+  },
+  "英泰": {
+    "platform": "wechat",
+    "chat_name": "安侣英泰离心机采购群",
+    "delivery_type": "instrument"
+  },
+  "触想智能": {
+    "platform": "wechat",
+    "chat_name": "安侣触想智能3588卡采购群",
+    "delivery_type": "instrument"
+  },
+  "言必信": {
+    "platform": "wxwork",
+    "chat_name": "安侣-言必信滤波器采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "贝塔利": {
+    "platform": "wechat",
+    "chat_name": "安侣-贝塔利采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "迈德威视": {
+    "platform": "wechat",
+    "chat_name": "安侣-迈德威视沟通群",
+    "delivery_type": "instrument"
+  },
+  "迈瑞": {
+    "platform": "wechat",
+    "chat_name": "迈瑞-测试群",
+    "delivery_type": "instrument"
+  },
+  "都友生物": {
+    "platform": "wechat",
+    "chat_name": "安侣-都友生物采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "金荣昌": {
+    "platform": "wechat",
+    "chat_name": "安侣-金荣昌沟通群",
+    "delivery_type": "instrument"
+  },
+  "锦众": {
+    "platform": "wechat",
+    "chat_name": "安侣锦众对账群",
+    "delivery_type": "instrument"
+  },
+  "阳博旭": {
+    "platform": "wechat",
+    "chat_name": "安侣-阳博旭采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "陵英": {
+    "platform": "wechat",
+    "chat_name": "安侣陵英封口膜采购",
+    "delivery_type": "instrument"
+  },
+  "顶讯": {
+    "platform": "wechat",
+    "chat_name": "顶讯安侣采购群",
+    "delivery_type": "instrument"
+  },
+  "飞彬": {
+    "platform": "wechat",
+    "chat_name": "飞彬→安侣医学采购群",
+    "delivery_type": "instrument"
+  },
+  "鼎嵩": {
+    "platform": "wechat",
+    "chat_name": "安侣-鼎嵩采购沟通群",
+    "delivery_type": "instrument"
+  },
+  "龙星辰": {
+    "platform": "wechat",
+    "chat_name": "安侣龙星辰对账沟通群",
     "delivery_type": "instrument"
   }
 }

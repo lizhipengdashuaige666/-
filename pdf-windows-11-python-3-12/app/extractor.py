@@ -64,8 +64,8 @@ class ContractExtractor:
     BUSINESS_WORDS = [
         "自动化技术", "自动化", "传动设备", "医学科技", "生物科技",
         "科技技术", "技术", "科技", "机电", "电气", "过滤",
-        "五金制品", "包装材料", "实验器材", "经营部", "印刷", "印副",
-        "工业", "精密", "电子", "设备", "贸易", "商贸", "实业",
+        "五金制品", "制品", "包装材料", "包装", "实验器材", "经营部", "印刷", "印副",
+        "工业", "精密", "电子", "设备", "贸易", "商贸", "实业", "新材料",
     ]
 
     INVALID_SHORT_NAMES: set[str] = {
@@ -92,11 +92,11 @@ class ContractExtractor:
     ]
 
     def extract(self, ocr_result: OCRResult) -> ExtractionResult:
-        # 过滤低置信度行，仅保留 score >= 0.5 或 score 为 None（旧版兼容）
+        # 过滤低置信度行，仅保留 score >= 0.3 或 score 为 None（旧版兼容）
         lines = [
             self._normalize_line(item.text)
             for item in ocr_result.lines
-            if item.text.strip() and (item.score is None or item.score >= 0.5)
+            if item.text.strip() and (item.score is None or item.score >= 0.3)
         ]
         contract_no = self._extract_contract_no(lines, ocr_result.full_text)
         vendor_name = self._extract_vendor_name(lines)

@@ -805,7 +805,7 @@ class PurchaseWorkbench(QWidget):
         return True
 
     def _archive(self, item: TaskItem) -> None:
-        """发送完成后归档文件到已发子目录，仅双章合同额外记录台账。"""
+        """发送完成后归档文件到已发子目录，仅双章合同记录台账。"""
         try:
             bt = (item.business_type or "").lower()
             if "双章" in bt:
@@ -829,10 +829,7 @@ class PurchaseWorkbench(QWidget):
             self._log(f"归档失败: {item.path.name} — {e}")
 
     def _record_to_excel(self, item: TaskItem) -> None:
-        """发送后记录到台账Excel — 仅双章合同。"""
-        bt = (item.business_type or "").lower()
-        if "双章" not in bt:
-            return
+        """发送后记录到台账Excel。"""
         supplier_full = self._get_supplier_full_name(item.supplier)
         from unified.ledger import append_row
         ok = append_row(supplier_full, item.number, item.path.name, item.business_type)

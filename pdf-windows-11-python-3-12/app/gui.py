@@ -13,13 +13,13 @@ from datetime import datetime
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QColor, QTextCursor, QShortcut, QKeySequence, QPixmap, QImage
+from PySide6.QtGui import QColor, QTextCursor, QShortcut, QKeySequence, QPixmap, QImage, QAction
 from PySide6.QtWidgets import (
     QAbstractItemView, QButtonGroup,
     QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFrame,
     QHBoxLayout, QLabel, QLineEdit, QListWidget,
     QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton, QHeaderView,
-    QRadioButton, QScrollArea, QSplitter,
+    QRadioButton, QScrollArea, QSplitter, QMenu,
     QStackedWidget, QStatusBar, QTableWidget, QTableWidgetItem,
     QVBoxLayout, QWidget, QProgressBar, QSizePolicy, QColorDialog,
 )
@@ -71,6 +71,7 @@ class ContractRenameApp(QWidget):
         self._mode = self.config.naming_mode
         self._ocr_visible = False
         self._pending_ocr_text = ""
+        self._pending_cache_info: str | None = None
         self._total_files = 0
         self._current_filter = "all"
         self._file_statuses: dict[str, str] = {}
@@ -491,16 +492,26 @@ class ContractRenameApp(QWidget):
         self._review_status_pill = QLabel("待扫描")
         self._review_status_pill.setObjectName("tagGray")
         title_row.addWidget(self._review_status_pill)
+        # Edit cache button
+        cache_btn = QPushButton("✏️ 编辑缓存")
+        cache_btn.setObjectName("smallBtn")
+        cache_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        cache_btn.clicked.connect(self._open_cache_editor)
+        title_row.addWidget(cache_btn)
         layout.addLayout(title_row)
 
         # OCR info cards
         self._ocr_vendor_value = QLabel("等待识别")
         self._ocr_contract_value = QLabel("等待识别")
         self._ocr_date_value = QLabel("等待识别")
+        self._ocr_cache_value = QLabel("等待识别")
+        self._ocr_cache_value.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._ocr_cache_value.mousePressEvent = lambda e: self._edit_cache_entry()
 
         layout.addWidget(self._ocr_info_card("🏢 供应商", self._ocr_vendor_value))
         layout.addWidget(self._ocr_info_card("🏷️ 合同号", self._ocr_contract_value))
         layout.addWidget(self._ocr_info_card("📅 日期",   self._ocr_date_value))
+        layout.addWidget(self._ocr_info_card("💾 缓存命中", self._ocr_cache_value))
 
         # Confidence
         conf_row = QHBoxLayout()
@@ -871,14 +882,20 @@ class ContractRenameApp(QWidget):
                     cache_match = self.vendor_cache.match_text(ocr_result.full_text)
                     fuzzy_info: str | None = None
                     if cache_match:
+                        self._pending_cache_info = f"精确命中: {cache_match.vendor_short_name} (全称: {cache_match.vendor_name})"
                         extraction.vendor_name = cache_match.vendor_name
                         extraction.vendor_short_name = cache_match.vendor_short_name
                     elif extraction.vendor_name:
                         fuzzy_match = self.vendor_cache.fuzzy_match(ocr_result.full_text)
                         if fuzzy_match:
+                            self._pending_cache_info = f"模糊匹配: {fuzzy_match.vendor_short_name} (全称: {fuzzy_match.vendor_name})"
                             extraction.vendor_name = fuzzy_match.vendor_name
                             extraction.vendor_short_name = fuzzy_match.vendor_short_name
                             fuzzy_info = f"模糊记忆匹配: {fuzzy_match.vendor_name}"
+                        else:
+                            self._pending_cache_info = None
+                    else:
+                        self._pending_cache_info = None
 
                     if not extraction.is_valid:
                         partial_name = self.renamer.build_filename(
@@ -1183,6 +1200,9 @@ class ContractRenameApp(QWidget):
 
         self._ocr_vendor_value.setText(e.vendor_name or "未识别")
         self._ocr_contract_value.setText(e.contract_no or "未识别")
+        # Show cache hit info
+        self._ocr_cache_value.setText(self._pending_cache_info or "无匹配")
+        self._update_cache_value_style()
         # Extract date from OCR text (extractor doesn't have date field)
         self._ocr_date_value.setText(self._extract_date_from_text(pending.ocr_text))
 
@@ -1282,10 +1302,13 @@ class ContractRenameApp(QWidget):
 
     def _clear_review_panel(self) -> None:
         self.pending_review = None
+        self._pending_cache_info = None
         self.suggested_entry.setText("")
         self._ocr_vendor_value.setText("等待识别")
         self._ocr_contract_value.setText("等待识别")
         self._ocr_date_value.setText("等待识别")
+        self._ocr_cache_value.setText("等待识别")
+        self._ocr_cache_value.setStyleSheet("")
         self._pending_ocr_text = ""
         self.ocr_text.clear()
         self.confirm_button.setEnabled(False)
@@ -1391,6 +1414,58 @@ class ContractRenameApp(QWidget):
     def _set_progress(self, text: str) -> None:
         if hasattr(self, "progress_label"):
             self.progress_label.setText(text)
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # Cache editor
+    # ═══════════════════════════════════════════════════════════════════════
+    def _edit_cache_entry(self) -> None:
+        """点击缓存命中标签时，快速编辑当前匹配的供应商简称。"""
+        if not self._pending_cache_info:
+            return
+        current = self._ocr_cache_value.text()
+        dlg = CacheEditDialog(self, current)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            new_text = dlg.result_name.strip()
+            if new_text and new_text != current:
+                self._apply_cache_correction(new_text)
+
+    def _apply_cache_correction(self, corrected_name: str) -> None:
+        """将修正后的名称写回 vendor_cache。"""
+        if not self.pending_review:
+            return
+        e = self.pending_review.extraction
+        old_name = e.vendor_short_name
+        e.vendor_short_name = corrected_name
+        self.vendor_cache.remember(e.vendor_name, corrected_name)
+        self._ocr_cache_value.setText(f"精确命中: {corrected_name} (全称: {e.vendor_name or '未知'}) [已修正]")
+        self._update_cache_value_style()
+        self._append_log(f"缓存已修正: {old_name} → {corrected_name}")
+        # Update suggested name
+        if old_name and corrected_name:
+            self.suggested_entry.setText(
+                self.suggested_entry.text().replace(old_name, corrected_name))
+
+    def _update_cache_value_style(self) -> None:
+        info = self._ocr_cache_value.text()
+        if "模糊" in info:
+            self._ocr_cache_value.setStyleSheet(
+                f"font-size: 13px; font-weight: 600; color: #F0A030; background: transparent;")
+        elif "精确" in info or "命中" in info:
+            self._ocr_cache_value.setStyleSheet(
+                f"font-size: 13px; font-weight: 600; color: #30C860; background: transparent;")
+        elif "已修正" in info:
+            self._ocr_cache_value.setStyleSheet(
+                f"font-size: 13px; font-weight: 600; color: #5090F0; background: transparent;")
+        else:
+            self._ocr_cache_value.setStyleSheet(
+                f"font-size: 13px; font-weight: 600; color: {_token(self._shell, 'text3', '#6C6C72')}; background: transparent;")
+        self._ocr_cache_value.setCursor(Qt.CursorShape.PointingHandCursor if ("命中" in info or "匹配" in info) else Qt.CursorShape.ArrowCursor)
+
+    def _open_cache_editor(self) -> None:
+        """打开完整的缓存编辑器，列出所有供应商条目。"""
+        dlg = VendorCacheManagerDialog(self, self.vendor_cache)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            self._append_log("供应商缓存已更新")
 
     # ═══════════════════════════════════════════════════════════════════════
     # Theme dialog
@@ -1532,3 +1607,147 @@ class ThemeSettingsDialog(QDialog):
 
     def _preview(self) -> None:
         self.parent()._shell.reload_theme(self.current_theme)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Cache edit dialog — 点击缓存命中标签时弹出，快速修正简称
+# ═══════════════════════════════════════════════════════════════════════════
+class CacheEditDialog(QDialog):
+    def __init__(self, parent: QWidget, current_text: str) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("修正缓存供应商简称")
+        self.setMinimumWidth(420)
+        self.result_name = ""
+        self.setStyleSheet(parent.styleSheet())
+
+        layout = QVBoxLayout(self)
+        layout.setSpacing(14)
+        layout.setContentsMargins(20, 18, 20, 18)
+
+        info = QLabel(f"当前缓存匹配:\n{current_text}")
+        info.setWordWrap(True)
+        info.setStyleSheet("font-size: 13px; color: #98989E;")
+        layout.addWidget(info)
+
+        layout.addWidget(QLabel("修正为简称（如: 林吉源）:"))
+        self.name_edit = QLineEdit()
+        self.name_edit.setPlaceholderText("输入正确的供应商简称")
+        layout.addWidget(self.name_edit)
+
+        hint = QLabel("此操作会更新 vendor_cache.json 中对应条目的简称和别名。")
+        hint.setWordWrap(True)
+        hint.setStyleSheet("font-size: 11px; color: #6C6C72;")
+        layout.addWidget(hint)
+
+        btn_row = QHBoxLayout()
+        save_btn = QPushButton("保存修正")
+        save_btn.setObjectName("primaryBtn")
+        save_btn.clicked.connect(self._accept)
+        cancel_btn = QPushButton("取消")
+        cancel_btn.setObjectName("secondaryBtn")
+        cancel_btn.clicked.connect(self.reject)
+        btn_row.addStretch()
+        btn_row.addWidget(cancel_btn)
+        btn_row.addWidget(save_btn)
+        layout.addLayout(btn_row)
+
+    def _accept(self) -> None:
+        self.result_name = self.name_edit.text().strip()
+        self.accept()
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Vendor cache manager dialog — 完整的缓存编辑器
+# ═══════════════════════════════════════════════════════════════════════════
+class VendorCacheManagerDialog(QDialog):
+    def __init__(self, parent: QWidget, vendor_cache: VendorCache) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("供应商缓存管理")
+        self.setMinimumSize(600, 420)
+        self.vendor_cache = vendor_cache
+        self._modified = False
+        self.setStyleSheet(parent.styleSheet())
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 14, 16, 14)
+        layout.setSpacing(10)
+
+        header = QLabel("双击单元格编辑简称和全称，右键删除条目。修改后点保存。")
+        header.setStyleSheet("font-size: 12px; color: #98989E;")
+        layout.addWidget(header)
+
+        self.table = QTableWidget()
+        self.table.setColumnCount(3)
+        self.table.setHorizontalHeaderLabels(["供应商简称", "供应商全称", "命中次数"])
+        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._on_context_menu)
+        self._load_data()
+        layout.addWidget(self.table, 1)
+
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(8)
+        save_btn = QPushButton("保存")
+        save_btn.setObjectName("primaryBtn")
+        save_btn.clicked.connect(self._save)
+        cancel_btn = QPushButton("取消")
+        cancel_btn.setObjectName("secondaryBtn")
+        cancel_btn.clicked.connect(self.reject)
+        btn_row.addStretch()
+        btn_row.addWidget(cancel_btn)
+        btn_row.addWidget(save_btn)
+        layout.addLayout(btn_row)
+
+    def _load_data(self) -> None:
+        vendors = self.vendor_cache._data.get("vendors", [])
+        self.table.setRowCount(len(vendors))
+        for i, v in enumerate(vendors):
+            sn = str(v.get("vendor_short_name", ""))
+            fn = str(v.get("vendor_name", ""))
+            cnt = str(v.get("count", ""))
+            self.table.setItem(i, 0, QTableWidgetItem(sn))
+            self.table.setItem(i, 1, QTableWidgetItem(fn))
+            cnt_item = QTableWidgetItem(cnt)
+            cnt_item.setFlags(cnt_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.table.setItem(i, 2, cnt_item)
+
+    def _on_context_menu(self, pos) -> None:
+        row = self.table.rowAt(pos.y())
+        if row < 0:
+            return
+        item = self.table.item(row, 0)
+        if not item:
+            return
+        menu = QMenu(self.table)
+        delete_action = menu.addAction("删除此条目")
+        action = menu.exec(self.table.viewport().mapToGlobal(pos))
+        if action == delete_action:
+            self.table.removeRow(row)
+            self._modified = True
+
+    def _save(self) -> None:
+        vendors = []
+        for i in range(self.table.rowCount()):
+            sn_item = self.table.item(i, 0)
+            fn_item = self.table.item(i, 1)
+            cnt_item = self.table.item(i, 2)
+            sn = sn_item.text().strip() if sn_item else ""
+            fn = fn_item.text().strip() if fn_item else ""
+            cnt = int(cnt_item.text()) if cnt_item and cnt_item.text().isdigit() else 1
+            if not sn and not fn:
+                continue
+            vendors.append({
+                "vendor_name": fn,
+                "vendor_short_name": sn,
+                "aliases": sorted({fn, sn}),
+                "count": cnt,
+                "first_seen": "",
+                "last_seen": "",
+            })
+        self.vendor_cache._data["vendors"] = vendors
+        self.vendor_cache.save()
+        self._modified = True
+        self.accept()

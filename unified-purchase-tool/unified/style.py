@@ -489,7 +489,8 @@ QTableWidget {{
     gridline-color: transparent;
     selection-background-color: {t_["selection_bg"]}; selection-color: {t_["text"]};
 }}
-QTableWidget::item {{ padding: 8px 6px; }}
+QTableWidget::item {{ padding: 8px 6px; color: {t_["text"]}; }}
+QTableWidget::item:selected {{ color: {t_["text"]}; }}
 QHeaderView::section {{
     background: {t_["card"]}; color: {t_["text2"]}; border: 0;
     border-bottom: 1px solid {t_["border"]}; border-radius: 0;
@@ -536,8 +537,19 @@ QScrollBar::handle:horizontal {{ background: rgba(255,255,255,0.10); border-radi
 QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{ width: 0; }}
 
 /* ---- Dialogs ---- */
-QDialog, QMessageBox {{ background-color: {t_["bg"]}; color: {t_["text"]}; }}
-QDialog QLabel, QMessageBox QLabel {{ color: {t_["text"]}; }}
+QDialog, QMessageBox {{
+    background-color: {t_["card"]}; color: {t_["text"]};
+}}
+QDialog QLabel, QMessageBox QLabel {{
+    color: {t_["text"]}; background: transparent;
+}}
+QDialog QPushButton, QMessageBox QPushButton {{
+    color: {t_["text"]}; background: {t_["input_bg"]}; border: 1px solid {bm};
+    border-radius: {R_MD}px; padding: 6px 14px; min-width: 72px;
+}}
+QDialog QPushButton:hover, QMessageBox QPushButton:hover {{
+    background: {t_["border"]};
+}}
 QDialog QLineEdit {{
     background: {t_["card"]}; color: {t_["text"]}; border: 1px solid {p}; border-radius: 8px; padding: 7px 9px;
 }}

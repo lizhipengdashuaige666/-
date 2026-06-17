@@ -10,24 +10,20 @@ from PySide6.QtWidgets import (
     QStackedWidget, QVBoxLayout, QWidget,
 )
 
-# 添加两个子项目的路径（相对 shell.py 所在目录的兄弟项目）
-_HERE = Path(__file__).resolve().parent.parent  # unified-purchase-tool/
-_PROJECTS = _HERE.parent  # .claude/projects/
-_NAMING_PROJECT = _PROJECTS / "pdf-windows-11-python-3-12"
-_WORKBENCH_PROJECT = _PROJECTS / "wechat-wxwork-text-purchase-workbench-main"
-sys.path.insert(0, str(_NAMING_PROJECT))
-sys.path.insert(0, str(_WORKBENCH_PROJECT))
-
-from app.config import load_config
-from app.gui import ContractRenameApp
-from gui.app import PurchaseWorkbench
+from unified import style
 from unified.watermark_app import WatermarkApp
 
-from unified import style
+_HERE = Path(__file__).resolve().parent.parent
+_PROJECTS = _HERE.parent
+_NAMING_PROJECT = _PROJECTS / "pdf-windows-11-python-3-12"
+_WORKBENCH_PROJECT = _PROJECTS / "wechat-wxwork-text-purchase-workbench-main"
 
 
 class UnifiedApp(QMainWindow):
-    """统一采购工具壳 — 侧栏导航 + 业务页面"""
+    """统一采购工具壳 — 侧栏导航 + 业务页面
+
+    水单识别直接加载，合同命名/发送台延迟加载以降低启动开销。
+    """
 
     def __init__(self):
         super().__init__()
@@ -36,21 +32,24 @@ class UnifiedApp(QMainWindow):
         self.setMinimumSize(900, 600)
         self.setAcceptDrops(True)
 
-        # ── 加载主题 ──
         self._theme_overrides = style.load_theme()
+        self._lazy_loaded: dict[int, bool] = {0: True, 1: False, 2: False}
 
-        # ── 加载配置 ──
-        self.naming_config = load_config(_NAMING_PROJECT)
-
-        # ── 创建页面 ──
+        # ── 页面 ──
         self.stack = QStackedWidget()
         self.stack.setStyleSheet(f"background: {style.BG};")
-        self.rename_page = ContractRenameApp(self.naming_config, parent=self, shell=self)
-        self.workbench_page = PurchaseWorkbench(parent=self, shell=self)
+
+        # index 0 — 水单识别（直接加载）
         self.watermark_page = WatermarkApp(parent=self, shell=self)
-        self.stack.addWidget(self.rename_page)     # index 0
-        self.stack.addWidget(self.workbench_page)  # index 1
-        self.stack.addWidget(self.watermark_page)   # index 2
+        self.stack.addWidget(self.watermark_page)
+
+        # index 1, 2 — 占位（延迟加载）
+        self.rename_page = None
+        self.workbench_page = None
+        self._placeholder1 = QWidget()
+        self._placeholder2 = QWidget()
+        self.stack.addWidget(self._placeholder1)
+        self.stack.addWidget(self._placeholder2)
 
         # ── 侧栏 ──
         self._nav_buttons: list[QPushButton] = []
@@ -88,9 +87,9 @@ class UnifiedApp(QMainWindow):
         layout.addWidget(section)
 
         nav_items = [
+            ("水单识别", "银行付款水单自动识别与记账"),
             ("合同命名", "PDF 合同自动识别与重命名"),
             ("合同发送台", "合同与对账单发送到供应商群聊"),
-            ("水单识别", "银行付款水单自动识别与记账"),
         ]
         for i, (name, desc) in enumerate(nav_items):
             btn = QPushButton(name)
@@ -105,16 +104,58 @@ class UnifiedApp(QMainWindow):
 
         layout.addStretch()
 
-        version = QLabel("v2.1 — 统一版")
+        version = QLabel("v2.3 — 统一版")
         version.setObjectName("versionLabel")
         layout.addWidget(version)
 
         return w
 
     def _switch_page(self, index: int) -> None:
+        if index == 0:
+            # 直接加载，无需延迟
+            self.stack.setCurrentIndex(index)
+            for i, btn in enumerate(self._nav_buttons):
+                btn.setChecked(i == index)
+            return
+
+        if not self._lazy_loaded.get(index):
+            try:
+                self._lazy_load_page(index)
+            except Exception:
+                QMessageBox.critical(
+                    self, "加载失败",
+                    f"模块加载失败，请检查依赖是否安装。\n"
+                    f"详情: {sys.exc_info()[1]}",
+                )
+                return
+            self._lazy_loaded[index] = True
+
         self.stack.setCurrentIndex(index)
         for i, btn in enumerate(self._nav_buttons):
             btn.setChecked(i == index)
+
+    def _lazy_load_page(self, index: int) -> None:
+        if index == 1:
+            sys.path.insert(0, str(_NAMING_PROJECT))
+            from app.config import load_config
+            from app.gui import ContractRenameApp
+            self.naming_config = load_config(_NAMING_PROJECT)
+            self.rename_page = ContractRenameApp(
+                self.naming_config, parent=self, shell=self,
+            )
+            self.stack.removeWidget(self._placeholder1)
+            self._placeholder1.deleteLater()
+            self._placeholder1 = None
+            self.stack.insertWidget(1, self.rename_page)
+
+        elif index == 2:
+            sys.path.insert(0, str(_WORKBENCH_PROJECT))
+            from gui.app import PurchaseWorkbench
+            self.workbench_page = PurchaseWorkbench(parent=self, shell=self)
+            self.stack.removeWidget(self._placeholder2)
+            self._placeholder2.deleteLater()
+            self._placeholder2 = None
+            self.stack.insertWidget(2, self.workbench_page)
 
     # ── 拖放支持 ──────────────────────────────────────────────────────
     def dragEnterEvent(self, event) -> None:
@@ -129,9 +170,9 @@ class UnifiedApp(QMainWindow):
 
     # ── 关闭确认 ──────────────────────────────────────────────────────
     def closeEvent(self, event) -> None:
-        # Check if naming tool is busy
         p = self.rename_page
-        if (hasattr(p, 'worker_thread')
+        if (p is not None
+                and hasattr(p, 'worker_thread')
                 and p.worker_thread
                 and p.worker_thread.is_alive()):
             r = QMessageBox.question(
@@ -146,9 +187,9 @@ class UnifiedApp(QMainWindow):
             if hasattr(p, '_stop_processing'):
                 p._stop_processing()
 
-        # Check if workbench has tasks marked "发送中" (in-flight sends)
         wb = self.workbench_page
-        if hasattr(wb, 'tasks'):
+        if (wb is not None
+                and hasattr(wb, 'tasks')):
             sending = [t for t in wb.tasks if getattr(t, 'status', '') == '发送中']
             if sending:
                 r = QMessageBox.question(

@@ -121,45 +121,61 @@ def _archive_sent_file(path: Path, messenger, supplier: str) -> None:
 def _record_to_excel_sent(path: Path, supplier: str) -> None:
     """Record sent file to 台账 Excel."""
     try:
-        import openpyxl, tempfile, shutil, os
+        import openpyxl, tempfile, shutil, os, time, ctypes
     except ModuleNotFoundError:
         return
     excel_path = Path(r"D:\采购工作\采购订单\已发\台账测试.xlsx")
     stem = path.stem
     if "合同" not in stem and "合同" not in str(path):
         return
-    try:
+
+    while True:
         try:
-            if excel_path.exists() and excel_path.stat().st_size > 1000:
-                wb = openpyxl.load_workbook(str(excel_path))
-            else:
-                raise FileNotFoundError
-        except Exception:
-            wb = openpyxl.Workbook()
-            ws = wb.active; ws.title = "台账"
-            ws.append(["供应商", "订单号", "文件名称", "类型", "单章合同", "双章合同"])
+            try:
+                if excel_path.exists() and excel_path.stat().st_size > 1000:
+                    wb = openpyxl.load_workbook(str(excel_path))
+                else:
+                    raise FileNotFoundError
+            except Exception:
+                wb = openpyxl.Workbook()
+                ws = wb.active; ws.title = "台账"
+                ws.append(["供应商", "订单号", "文件名称", "类型", "单章合同", "双章合同"])
 
-        ws = wb.active
-        found = False
-        for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=2):
-            if row[0].value and str(row[0].value).strip() == supplier:
-                found = True
-                break
+            ws = wb.active
+            found = False
+            for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=2):
+                if row[0].value and str(row[0].value).strip() == supplier:
+                    found = True
+                    break
 
-        if not found:
-            n = ws.max_row + 1
-            ws.cell(row=n, column=1, value=supplier)
-            ws.cell(row=n, column=2, value=path.stem)
-            ws.cell(row=n, column=3, value=path.name)
-            ws.cell(row=n, column=5, value="是")
-            ws.cell(row=n, column=6, value="是")
+            if not found:
+                n = ws.max_row + 1
+                ws.cell(row=n, column=1, value=supplier)
+                ws.cell(row=n, column=2, value=path.stem)
+                ws.cell(row=n, column=3, value=path.name)
+                ws.cell(row=n, column=5, value="是")
+                ws.cell(row=n, column=6, value="是")
 
-        tmp = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False)
-        tmp.close()
-        wb.save(tmp.name)
-        shutil.copy2(tmp.name, str(excel_path))
-        os.unlink(tmp.name)
-    except PermissionError:
-        logger.warning("台账写入失败: 文件被占用")
-    except Exception as exc:
-        logger.warning(f"台账写入失败: {exc}")
+            tmp = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False)
+            tmp.close()
+            try:
+                wb.save(tmp.name)
+                shutil.copy2(tmp.name, str(excel_path))
+            finally:
+                if os.path.exists(tmp.name):
+                    os.unlink(tmp.name)
+            return
+        except PermissionError:
+            result = ctypes.windll.user32.MessageBoxW(
+                0,
+                "台账需要记录，请保存并关闭 Excel 中的台账文件，\n然后点「确定」继续。\n点「取消」则跳过本次记录。",
+                "台账写入",
+                0x00040001 | 0x00000030 | 0x00000100,
+            )
+            if result != 1:
+                logger.warning("台账写入跳过: 用户取消")
+                return
+            time.sleep(0.3)
+        except Exception as exc:
+            logger.warning(f"台账写入失败: {exc}")
+            return
