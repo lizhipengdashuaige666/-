@@ -15,7 +15,7 @@ import win32process
 
 from core.config import TESSDATA_DIR
 from core.logger import logger
-from core.utils import clipboard_has_files, copy_files_to_clipboard, copy_text_to_clipboard
+from core.utils import clipboard_has_files, copy_files_to_clipboard, copy_text_to_clipboard, clipboard_has_text
 from uia_runtime import import_uiautomation
 
 SW_RESTORE = 9
@@ -166,11 +166,14 @@ class BaseMessenger:
             self._focus_message_input()
             copy_text_to_clipboard(text)
             time.sleep(0.05)
+            if not clipboard_has_text():
+                logger.error("文字剪贴板写入后校验失败")
+                return False
             keyboard.press_and_release("ctrl+v")
-            time.sleep(0.2)
+            time.sleep(0.3)
             keyboard.press_and_release("enter")
             logger.info("文字通知已发送")
-            time.sleep(0.2)
+            time.sleep(0.3)
             return True
         except Exception as exc:
             logger.error(f"文字通知发送失败: {exc}")

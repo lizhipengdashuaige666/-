@@ -9,6 +9,11 @@
     "chat_name": "里博安侣商务沟通",
     "delivery_type": "instrument"
   },
+  "万度": {
+    "platform": "wxwork",
+    "chat_name": "安侣-万度电气采购沟通群",
+    "delivery_type": "instrument"
+  },
   "东驰": {
     "platform": "wechat",
     "chat_name": "东驰-安侣采购沟通群",
@@ -37,6 +42,11 @@
   "佳通成": {
     "platform": "wechat",
     "chat_name": "佳通成-安侣",
+    "delivery_type": "instrument"
+  },
+  "信步": {
+    "platform": "wxwork",
+    "chat_name": "安侣医疗-信步主板采购群",
     "delivery_type": "instrument"
   },
   "元汇": {
@@ -351,7 +361,7 @@
   },
   "龙星辰": {
     "platform": "wechat",
-    "chat_name": "安侣龙星辰对账沟通群",
+    "chat_name": "安侣@龙星辰对账沟通群",
     "delivery_type": "instrument"
   }
 }

@@ -21,13 +21,13 @@
     "supplier": "激埃特",
     "platform": "wechat",
     "chat_name": "安侣-激埃特采购沟通群",
-    "count": 1
+    "count": 3
   },
   "捷通\nwxwork\n安侣-捷通印刷采购沟通群": {
     "supplier": "捷通",
     "platform": "wxwork",
     "chat_name": "安侣-捷通印刷采购沟通群",
-    "count": 1
+    "count": 2
   },
   "恒辉达\nwechat\n安侣-恒辉达采购沟通群": {
     "supplier": "恒辉达",
@@ -51,7 +51,7 @@
     "supplier": "强毅",
     "platform": "wechat",
     "chat_name": "安侣-强毅双面胶贴膜采购群",
-    "count": 2
+    "count": 3
   },
   "林吉源\nwechat\n安侣 林吉源 品质交付沟通群": {
     "supplier": "林吉源",
@@ -63,7 +63,7 @@
     "supplier": "东驰",
     "platform": "wechat",
     "chat_name": "东驰-安侣采购沟通群",
-    "count": 1
+    "count": 2
   },
   "明达康\nwechat\n明达康显示屏采购沟通群": {
     "supplier": "明达康",
@@ -75,13 +75,13 @@
     "supplier": "合川",
     "platform": "wechat",
     "chat_name": "安侣=合川对账沟通群",
-    "count": 1
+    "count": 2
   },
   "宝印达\nwechat\n友发（宝印达）-安侣采购沟通群": {
     "supplier": "宝印达",
     "platform": "wechat",
     "chat_name": "友发（宝印达）-安侣采购沟通群",
-    "count": 1
+    "count": 2
   },
   "科普\nwechat\n科普采购沟通群": {
     "supplier": "科普",
@@ -111,13 +111,13 @@
     "supplier": "元汇",
     "platform": "wechat",
     "chat_name": "元汇",
-    "count": 1
+    "count": 2
   },
   "创擎\nwechat\n创擎安侣钣金采购群": {
     "supplier": "创擎",
     "platform": "wechat",
     "chat_name": "创擎安侣钣金采购群",
-    "count": 1
+    "count": 3
   },
   "复基源诺\nwechat\n安侣-复基源诺采购沟通群": {
     "supplier": "复基源诺",
@@ -135,7 +135,7 @@
     "supplier": "洁特",
     "platform": "wechat",
     "chat_name": "洁特-安侣对账开票沟通",
-    "count": 1
+    "count": 3
   },
   "炜豪兴\nwechat\n安侣-炜豪兴": {
     "supplier": "炜豪兴",
@@ -165,6 +165,42 @@
     "supplier": "亿博特",
     "platform": "wxwork",
     "chat_name": "安侣-亿博特-相机保护罩采购沟通",
+    "count": 1
+  },
+  "万度\nwxwork\n安侣-万度电气采购沟通群": {
+    "supplier": "万度",
+    "platform": "wxwork",
+    "chat_name": "安侣-万度电气采购沟通群",
+    "count": 2
+  },
+  "美佰力\nwechat\n安侣美佰力合同采购沟通": {
+    "supplier": "美佰力",
+    "platform": "wechat",
+    "chat_name": "安侣美佰力合同采购沟通",
+    "count": 1
+  },
+  "永嘉\nwechat\n永嘉-安侣的采购沟通群": {
+    "supplier": "永嘉",
+    "platform": "wechat",
+    "chat_name": "永嘉-安侣的采购沟通群",
+    "count": 1
+  },
+  "信步\nwxwork\n安侣医疗-信步主板采购群": {
+    "supplier": "信步",
+    "platform": "wxwork",
+    "chat_name": "安侣医疗-信步主板采购群",
+    "count": 1
+  },
+  "龙星辰\nwechat\n安侣@龙星辰对账沟通群": {
+    "supplier": "龙星辰",
+    "platform": "wechat",
+    "chat_name": "安侣@龙星辰对账沟通群",
+    "count": 1
+  },
+  "金荣昌\nwechat\n安侣-金荣昌沟通群": {
+    "supplier": "金荣昌",
+    "platform": "wechat",
+    "chat_name": "安侣-金荣昌沟通群",
     "count": 1
   }
 }

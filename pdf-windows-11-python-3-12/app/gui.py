@@ -637,6 +637,9 @@ class ContractRenameApp(QWidget):
         """Click a file in the left queue -> show its PDF preview."""
         text = item.text()
         fn = text.split("\n")[0].strip()
+        # Strip emoji icon prefix if present (e.g. "✅  迈瑞PO20250529001.pdf")
+        import re
+        fn = re.sub(r'^[^\w]*\s+', '', fn)
         if not fn:
             return
         found = None
@@ -856,7 +859,6 @@ class ContractRenameApp(QWidget):
                         _qt("update_file_status", (pdf_path.name, "moving"))
                         final_path = self.renamer.move_to_output(pdf_path, self.config.output_dir)
                         self._record_result(LogEntry(original_name=pdf_path.name, new_name=final_path.name, status="成功", error_reason="已移动到输出目录"))
-                        _qt("record_to_ledger", (str(final_path), pdf_path.name))
                         _qt("add_to_workbench", str(final_path))
                     _qt("update_file_status", (pdf_path.name, "done"))
                     _qt("timing", time.monotonic() - file_start)
@@ -921,6 +923,7 @@ class ContractRenameApp(QWidget):
                         if extraction.vendor_name:
                             self.vendor_cache.remember(extraction.vendor_name, extraction.vendor_short_name)
                         _qt("update_file_status", (pdf_path.name, "queued" if self.send_bridge.enabled else "moving"))
+                        _qt("update_file_paths", (pdf_path.name, str(final_path)))
                         self._deliver_and_record(final_path, original_name=pdf_path.name, failure_prefix="已手动命名，但移动到发送平台失败")
                         _qt("add_to_workbench", str(final_path))
                         _qt("update_file_status", (pdf_path.name, "done"))
@@ -937,6 +940,7 @@ class ContractRenameApp(QWidget):
                         self.vendor_cache.remember(extraction.vendor_name, extraction.vendor_short_name)
                         prefix = "缓存命中" if cache_match else f"模糊记忆 ({fuzzy_info})"
                         _qt("update_file_status", (pdf_path.name, "queued" if self.send_bridge.enabled else "moving"))
+                        _qt("update_file_paths", (pdf_path.name, str(final_path)))
                         self._deliver_and_record(final_path, original_name=pdf_path.name, success_prefix=f"{prefix}，自动重命名")
                         _qt("add_to_workbench", str(final_path))
                         _qt("update_file_status", (pdf_path.name, "done"))
@@ -962,6 +966,7 @@ class ContractRenameApp(QWidget):
                     final_path = self.renamer.move_to_output(final_path, self.config.output_dir)
                     self.vendor_cache.remember(extraction.vendor_name, extraction.vendor_short_name)
                     _qt("update_file_status", (pdf_path.name, "queued" if self.send_bridge.enabled else "moving"))
+                    _qt("update_file_paths", (pdf_path.name, str(final_path)))
                     self._deliver_and_record(final_path, original_name=pdf_path.name, failure_prefix="已重命名，但移动到发送平台失败")
                     _qt("add_to_workbench", str(final_path))
                     _qt("update_file_status", (pdf_path.name, "done"))
@@ -1012,12 +1017,6 @@ class ContractRenameApp(QWidget):
         self._record_result(LogEntry(original_name=original_name, new_name=delivery.target_path.name,
                                      status="成功", error_reason=reason))
 
-        # Record to 台账 spreadsheet when file was delivered successfully
-        try:
-            self.ui_queue.put(("record_to_ledger", (str(pdf_path), original_name)))
-        except Exception:
-            pass  # ledger recording is non-critical
-
     # ═══════════════════════════════════════════════════════════════════════
     # Auto-load renamed files into the workbench (right panel)
     # ═══════════════════════════════════════════════════════════════════════
@@ -1033,29 +1032,6 @@ class ContractRenameApp(QWidget):
                     pass
                 return
             parent = parent.parent()
-
-    def _record_to_ledger(self, pdf_path: Path, original_name: str) -> None:
-        """Append a row to 已发台账.xlsx — only for 双章合同"""
-        if self._mode != "dual_chop":
-            return
-
-        supplier = "未知"
-        contract_no = ""
-        if self.pending_review and self.pending_review.original_name == original_name:
-            e = self.pending_review.extraction
-            supplier = e.vendor_short_name or e.vendor_name or original_name.split(".")[0]
-            contract_no = e.contract_no or ""
-        else:
-            supplier = pdf_path.stem.split("_")[0] if "_" in pdf_path.stem else pdf_path.stem
-            contract_no = pdf_path.stem.split("_")[-1] if "_" in pdf_path.stem else ""
-
-        from unified.ledger import append_row
-        ok = append_row(supplier, contract_no, original_name, "双章合同")
-        if ok:
-            today = datetime.now().strftime("%Y-%m-%d")
-            self._append_log(f"台账已记录: {supplier} | {contract_no} | {today}")
-        else:
-            self._append_log("台账写入失败: 文件被其他程序占用，请关闭Excel后重试")
 
     # ═══════════════════════════════════════════════════════════════════════
     # UI queue poller
@@ -1114,12 +1090,9 @@ class ContractRenameApp(QWidget):
                         self._add_to_workbench(Path(payload))
                     except Exception:
                         pass
-                elif mt == "record_to_ledger":
-                    pdf_path_str, original_name = payload
-                    try:
-                        self._record_to_ledger(Path(pdf_path_str), original_name)
-                    except Exception:
-                        pass
+                elif mt == "update_file_paths":
+                    old_name, new_path = payload
+                    self._file_paths[old_name] = Path(new_path)
             except Exception:
                 import traceback
                 self._append_log(f"[内部错误] {traceback.format_exc()}")

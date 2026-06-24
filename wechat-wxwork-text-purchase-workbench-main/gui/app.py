@@ -81,6 +81,20 @@ def _position_top_right(dialog: QMessageBox) -> None:
     dialog.move(x, y)
 
 
+def _position_bottom_right(dialog: QMessageBox) -> None:
+    """将弹窗定位到最右边屏幕的右下角。"""
+    screens = QApplication.screens()
+    if not screens:
+        return
+    rightmost = max(screens, key=lambda s: s.geometry().right())
+    geo = rightmost.availableGeometry()
+    dialog.show()
+    dialog.hide()
+    x = geo.right() - dialog.width() - 20
+    y = geo.bottom() - dialog.height() - 40
+    dialog.move(x, y)
+
+
 @dataclass
 class TaskItem:
     path: Path
@@ -721,8 +735,14 @@ class PurchaseWorkbench(QWidget):
         if needs_confirmation(task.supplier, task.platform, task.chat_name):
             msg = QMessageBox(QMessageBox.Question, "发送前确认", confirm_text,
                               QMessageBox.Yes | QMessageBox.No, self)
-            msg.setWindowFlags(msg.windowFlags() | Qt.WindowStaysOnTopHint)
-            _position_top_right(msg)
+            msg.setWindowFlags(
+                Qt.Dialog | Qt.WindowStaysOnTopHint | Qt.CustomizeWindowHint | Qt.WindowTitleHint
+            )
+            msg.setDefaultButton(QMessageBox.StandardButton.Yes)
+            _position_bottom_right(msg)
+            msg.show()
+            msg.raise_()
+            msg.activateWindow()
             result = msg.exec()
             if result != QMessageBox.Yes:
                 self._log("用户取消发送。")
@@ -737,8 +757,14 @@ class PurchaseWorkbench(QWidget):
         msg = QMessageBox(QMessageBox.Question, "确认并发送",
             f"{prefix}\n\n目标群聊：\n{task.chat_name}\n\n请确认当前打开的就是这个群聊。\n点击「是」后会立刻发送文字和 PDF。",
             QMessageBox.Yes | QMessageBox.No, self)
-        msg.setWindowFlags(msg.windowFlags() | Qt.WindowStaysOnTopHint)
+        msg.setWindowFlags(
+            Qt.Dialog | Qt.WindowStaysOnTopHint | Qt.CustomizeWindowHint | Qt.WindowTitleHint
+        )
+        msg.setDefaultButton(QMessageBox.StandardButton.Yes)
         _position_top_right(msg)
+        msg.show()
+        msg.raise_()
+        msg.activateWindow()
         result = msg.exec()
         if result != QMessageBox.Yes:
             self._log("用户取消发送。")
@@ -778,13 +804,22 @@ class PurchaseWorkbench(QWidget):
                 QMessageBox.critical(self, "发送失败", "文字通知发送失败。")
                 return False
 
+            # 文字发送后稍等确保消息已发出，再开始发文件
+            time.sleep(0.8)
+
             for i, item in enumerate(selected):
                 item.status = "发送中"
                 self._refresh_table()
                 self._send_progress.setValue(i)
                 self._send_progress.setFormat(f"发送中 {i}/{total}")
                 adapter._set_foreground(adapter.hwnd)
-                adapter.send_file(item.path)
+                if not adapter.send_file(item.path):
+                    item.status = "发送失败"
+                    item.detail = "文件发送失败: 剪贴板写入失败或窗口丢失"
+                    self._log(f"文件发送失败: {item.path.name}")
+                    self._refresh_table()
+                    self._send_progress.setValue(i + 1)
+                    continue
                 time.sleep(2)
                 item.status = "已发送"
                 item.checked = False

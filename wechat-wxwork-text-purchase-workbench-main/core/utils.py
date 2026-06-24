@@ -42,6 +42,17 @@ def clipboard_has_files() -> bool:
         return False
 
 
+def clipboard_has_text() -> bool:
+    try:
+        win32clipboard.OpenClipboard()
+        try:
+            return bool(win32clipboard.IsClipboardFormatAvailable(win32con.CF_UNICODETEXT))
+        finally:
+            win32clipboard.CloseClipboard()
+    except Exception:
+        return False
+
+
 def copy_text_to_clipboard(text: str) -> None:
     last_error: Exception | None = None
     for _ in range(5):
