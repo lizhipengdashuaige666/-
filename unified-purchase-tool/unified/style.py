@@ -298,7 +298,7 @@ QFrame#card {{
 
 /* ---- Inset panels (log, OCR info, preview) ---- */
 QFrame#ocrInfoCard {{
-    background: {t_["card_alt"]}; border: 2px solid {bs}; border-radius: 16px;
+    background: {t_["card"]}; border: 1px solid {bs}; border-radius: 12px;
 }}
 QFrame#previewCard {{
     background: {t_["card_alt"]}; border: 2px dashed {bm}; border-radius: {R_LG}px;
@@ -486,7 +486,7 @@ QComboBox QAbstractItemView {{
 
 /* ---- Log / OCR / Message Preview ---- */
 #logBox, #ocrBox {{
-    background: {t_["card_alt"]}; border: 1px solid {bs}; border-radius: {R_MD}px;
+    background: {t_["card"]}; border: 1px solid {bs}; border-radius: {R_MD}px;
     padding: 12px; font-size: 12px; color: {t_["text"]};
     font-family: {FONT_MONO};
 }}
@@ -575,7 +575,7 @@ QSplitter::handle {{ background: {t_["border"]}; }}
 
 /* ---- ScrollArea (preview) ---- */
 QScrollArea#previewScroll {{
-    background: {t_["card_alt"]}; border: 1px solid {bs}; border-radius: {R_MD}px;
+    background: {t_["card"]}; border: 1px solid {bs}; border-radius: {R_MD}px;
 }}
 
 /* ---- Scrollbars — 5px wide, rounded ---- */
