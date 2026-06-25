@@ -95,7 +95,7 @@ class ContractRenameApp(QWidget):
                         min(800, available.height() - 40))
         else:
             self.resize(1200, 800)
-        self.setMinimumSize(1050, 700)
+        self.setMinimumSize(850, 520)
         # Theme and stylesheet are managed by the unified shell
         self._build_ui()
         QShortcut(QKeySequence(Qt.Key.Key_Return), self).activated.connect(self._on_return_confirm)
@@ -170,30 +170,29 @@ class ContractRenameApp(QWidget):
 
 
     # ═══════════════════════════════════════════════════════════════════════
-    # LEFT — File queue (340px)
+    # LEFT — File queue
     # ═══════════════════════════════════════════════════════════════════════
     def _build_left_panel(self) -> QWidget:
         panel = self._card("sideCard")
-        panel.setFixedWidth(320)
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(18, 16, 18, 16)
-        layout.setSpacing(10)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(6)
 
         # ── Title ──
-        title = QLabel("📋 文件队列")
+        title = QLabel("文件队列")
         title.setObjectName("sideTitle")
         layout.addWidget(title)
 
         # ── Search ──
         self.search_box = QLineEdit()
         self.search_box.setObjectName("searchBox")
-        self.search_box.setPlaceholderText("🔍 搜索文件名...")
+        self.search_box.setPlaceholderText("搜索文件名...")
         self.search_box.textChanged.connect(self._on_search)
         layout.addWidget(self.search_box)
 
         # ── Status filter ──
         self._filter_combo = QComboBox()
-        self._filter_combo.addItems(["📋 全部", "⏳ 待处理", "🔍 OCR中", "✋ 待确认", "✅ 已完成", "❌ 失败"])
+        self._filter_combo.addItems(["全部", "待处理", "OCR中", "待确认", "已完成", "失败"])
         self._filter_combo.setCurrentIndex(0)
         self._filter_combo.currentIndexChanged.connect(self._on_filter_combo)
         layout.addWidget(self._filter_combo)
@@ -201,20 +200,20 @@ class ContractRenameApp(QWidget):
         # ── File list ──
         self.file_list = QListWidget()
         self.file_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.file_list.setMinimumHeight(180)
+        self.file_list.setMinimumHeight(120)
         self.file_list.itemClicked.connect(self._on_file_selected)
         layout.addWidget(self.file_list, stretch=1)
 
         # ── Drag zone ──
         drop_zone = QFrame()
         drop_zone.setObjectName("previewCard")
-        drop_zone.setMinimumHeight(56)
-        drop_zone.setMaximumHeight(64)
+        drop_zone.setMinimumHeight(48)
+        drop_zone.setMaximumHeight(56)
         drop_zone.setCursor(Qt.CursorShape.PointingHandCursor)
         dz_layout = QVBoxLayout(drop_zone)
-        dz_layout.setContentsMargins(12, 10, 12, 10)
+        dz_layout.setContentsMargins(8, 6, 8, 6)
         dz_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        dz_text = QLabel("📎 拖拽 PDF 文件或文件夹到此处")
+        dz_text = QLabel("拖拽 PDF 文件或文件夹到此处")
         dz_text.setObjectName("sideSubtitle")
         dz_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         dz_layout.addWidget(dz_text)
@@ -244,21 +243,22 @@ class ContractRenameApp(QWidget):
         v_splitter.setSizes([400, 180])
 
         layout.addWidget(v_splitter, 1)
+        layout.setSpacing(6)
         return area
 
     # ── Toolbar ───────────────────────────────────────────────────────────
     def _build_toolbar(self) -> QWidget:
         bar = QWidget()
         bar.setObjectName("toolbar")
-        bar.setFixedHeight(56)
+        bar.setFixedHeight(50)
         bar_layout = QHBoxLayout(bar)
         bar_layout.setContentsMargins(2, 0, 2, 0)
-        bar_layout.setSpacing(8)
+        bar_layout.setSpacing(6)
 
         # Title
         title_box = QVBoxLayout()
         title_box.setSpacing(1)
-        title = QLabel("📂 采购工作台")
+        title = QLabel("采购工作台")
         title.setObjectName("toolbarTitle")
         title_box.addWidget(title, stretch=1)
         bar_layout.addLayout(title_box, stretch=1)
@@ -284,30 +284,30 @@ class ContractRenameApp(QWidget):
         bar_layout.addWidget(sep)
 
         # Actions
-        self.fetch_button = QPushButton("📧 拉取邮件附件")
+        self.fetch_button = QPushButton("拉取邮件")
         self.fetch_button.setObjectName("secondaryBtn")
-        self.fetch_button.setFixedHeight(34)
+        self.fetch_button.setFixedHeight(32)
         self.fetch_button.clicked.connect(self._fetch_emails)
-        self.start_button = QPushButton("🚀 开始扫描")
+        self.start_button = QPushButton("开始扫描")
         self.start_button.setObjectName("primaryBtn")
-        self.start_button.setFixedHeight(34)
+        self.start_button.setFixedHeight(32)
         self.start_button.clicked.connect(self._start_processing)
         bar_layout.addWidget(self.fetch_button)
         bar_layout.addWidget(self.start_button)
 
         # Stop — hidden until processing
-        self.stop_button = QPushButton("⏹️ 停止")
+        self.stop_button = QPushButton("停止")
         self.stop_button.setObjectName("stopBtn")
-        self.stop_button.setFixedHeight(34)
+        self.stop_button.setFixedHeight(32)
         self.stop_button.setEnabled(False)
         self.stop_button.setVisible(False)
         self.stop_button.clicked.connect(self._stop_with_confirm)
         bar_layout.addWidget(self.stop_button)
 
-        self.theme_btn = QPushButton("🎨 主题")
+        self.theme_btn = QPushButton("主题")
         self.theme_btn.setObjectName("secondaryBtn")
-        self.theme_btn.setFixedHeight(34)
-        self.theme_btn.clicked.connect(self._open_theme_dialog)
+        self.theme_btn.setFixedHeight(32)
+        self.theme_btn.clicked.connect(self._toggle_theme)
         bar_layout.addWidget(self.theme_btn)
 
         return bar
@@ -315,23 +315,23 @@ class ContractRenameApp(QWidget):
     # ── Stats row ─────────────────────────────────────────────────────────
     def _build_stat_row(self) -> QWidget:
         row = QWidget()
-        row.setFixedHeight(96)
+        row.setFixedHeight(80)
         row_layout = QHBoxLayout(row)
         row_layout.setContentsMargins(0, 0, 0, 0)
-        row_layout.setSpacing(10)
+        row_layout.setSpacing(6)
 
         stats = [
-            ("pending", "⏳ 待处理",  "0", _token(self._shell, "text", "#F5F5F7")),
-            ("done",    "✅ 已完成",  "0", _token(self._shell, "success", "#30D158")),
-            ("failed",  "❌ 失败",    "0", _token(self._shell, "danger", "#FF453A")),
-            ("review",  "✋ 待确认",  "0", _token(self._shell, "primary", "#0A84FF")),
+            ("pending", "待处理",  "0", _token(self._shell, "text", "#F5F5F7")),
+            ("done",    "已完成",  "0", _token(self._shell, "success", "#30D158")),
+            ("failed",  "失败",    "0", _token(self._shell, "danger", "#FF453A")),
+            ("review",  "待确认",  "0", _token(self._shell, "primary", "#0A84FF")),
         ]
         self._stat_value_labels = {}
 
         for key, label_text, val, color in stats:
             card = self._card("statCard")
             cl = QVBoxLayout(card)
-            cl.setContentsMargins(16, 12, 16, 12)
+            cl.setContentsMargins(12, 8, 12, 8)
             cl.setSpacing(2)
 
             vl = QLabel(val)
@@ -357,21 +357,21 @@ class ContractRenameApp(QWidget):
         # Header
         hdr = QHBoxLayout()
         hdr.setSpacing(8)
-        preview_title = QLabel("👁️ PDF 预览")
+        preview_title = QLabel("PDF 预览")
         preview_title.setObjectName("cardTitle")
         hdr.addWidget(preview_title)
         hdr.addStretch()
         self.page_label = QLabel("")
         self.page_label.setObjectName("sideSubtitle")
-        self.page_label.setFixedWidth(48)
+        self.page_label.setFixedWidth(40)
         self.page_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         hdr.addWidget(self.page_label)
-        self.prev_page_btn = QPushButton("← 上一页")
+        self.prev_page_btn = QPushButton("上一页")
         self.prev_page_btn.setObjectName("secondaryBtn")
         self.prev_page_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.prev_page_btn.clicked.connect(self._prev_page)
         self.prev_page_btn.setVisible(False)
-        self.next_page_btn = QPushButton("下一页 →")
+        self.next_page_btn = QPushButton("下一页")
         self.next_page_btn.setObjectName("secondaryBtn")
         self.next_page_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.next_page_btn.clicked.connect(self._next_page)
@@ -383,13 +383,13 @@ class ContractRenameApp(QWidget):
         # Preview area
         self.preview_scroll = QScrollArea()
         self.preview_scroll.setObjectName("previewScroll")
-        self.preview_scroll.setMinimumHeight(240)
+        self.preview_scroll.setMinimumHeight(160)
         self.preview_scroll.setWidgetResizable(True)
-        self.preview_label = QLabel("📄 合同扫描件预览")
+        self.preview_label = QLabel("选择文件以预览")
         self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         placeholder_color = _token(self._shell, "text3", "#6C6C72")
         self.preview_label.setStyleSheet(
-            f"font-size: 13px; color: {placeholder_color}; background: transparent; padding: 40px;"
+            f"font-size: 13px; color: {placeholder_color}; background: transparent; padding: 20px;"
         )
         self.preview_label.setMinimumHeight(200)
         self.preview_scroll.setWidget(self.preview_label)
@@ -403,12 +403,12 @@ class ContractRenameApp(QWidget):
         self.rename_card = card
         card.setMinimumHeight(0)
         layout = QVBoxLayout(card)
-        layout.setContentsMargins(18, 16, 18, 16)
-        layout.setSpacing(8)
+        layout.setContentsMargins(14, 10, 14, 10)
+        layout.setSpacing(6)
 
         hdr = QHBoxLayout()
         hdr.setSpacing(8)
-        title = QLabel("💡 建议文件名")
+        title = QLabel("建议文件名")
         title.setObjectName("cardTitle")
         hdr.addWidget(title)
         hdr.addStretch()
@@ -420,21 +420,21 @@ class ContractRenameApp(QWidget):
         self.suggested_entry = QLineEdit()
         self.suggested_entry.setObjectName("suggestName")
         self.suggested_entry.setPlaceholderText("选择左侧文件后将自动生成建议文件名")
-        self.suggested_entry.setMinimumHeight(70)
+        self.suggested_entry.setMinimumHeight(52)
         layout.addWidget(self.suggested_entry)
 
-        layout.addSpacing(12)
+        layout.addSpacing(8)
 
         action_row = QHBoxLayout()
         action_row.setSpacing(8)
         action_row.addStretch()
-        self.copy_button = QPushButton("📋 复制")
+        self.copy_button = QPushButton("复制")
         self.copy_button.setObjectName("secondaryBtn")
         self.copy_button.clicked.connect(self._copy_suggested_name)
-        self.skip_button = QPushButton("⏭️ 跳过")
+        self.skip_button = QPushButton("跳过")
         self.skip_button.setObjectName("secondaryBtn")
         self.skip_button.clicked.connect(self._skip_current)
-        self.confirm_button = QPushButton("✅ 确认")
+        self.confirm_button = QPushButton("确认")
         self.confirm_button.setObjectName("primaryBtn")
         self.confirm_button.clicked.connect(self._confirm_current)
         self.skip_button.setEnabled(False)
@@ -444,10 +444,10 @@ class ContractRenameApp(QWidget):
         action_row.addWidget(self.confirm_button)
         layout.addLayout(action_row)
 
-        # Footer: two rows
-        layout.addSpacing(12)
+        # Footer
+        layout.addSpacing(6)
         footer_layout = QVBoxLayout()
-        footer_layout.setSpacing(8)
+        footer_layout.setSpacing(6)
         self.summary_label = QLabel("等待开始")
         self.summary_label.setObjectName("sideSubtitle")
         self.summary_label.setWordWrap(True)
@@ -460,9 +460,9 @@ class ContractRenameApp(QWidget):
         self.progress_bar.setObjectName("progressBar")
         self.progress_bar.setTextVisible(False)
         self.progress_bar.setFixedWidth(100)
-        self.open_folder_btn = QPushButton("📁 输出目录")
+        self.open_folder_btn = QPushButton("输出目录")
         self.open_folder_btn.setObjectName("secondaryBtn")
-        self.open_folder_btn.setFixedHeight(26)
+        self.open_folder_btn.setFixedHeight(24)
         self.open_folder_btn.clicked.connect(self._open_output_folder)
         bottom_row.addStretch()
         bottom_row.addWidget(self.progress_bar)
@@ -473,19 +473,18 @@ class ContractRenameApp(QWidget):
         return card
 
     # ═══════════════════════════════════════════════════════════════════════
-    # RIGHT — Review center (340px)
+    # RIGHT — Review center
     # ═══════════════════════════════════════════════════════════════════════
     def _build_right_panel(self) -> QWidget:
         panel = self._card("reviewCard")
-        panel.setFixedWidth(320)
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(18, 16, 18, 16)
-        layout.setSpacing(10)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(6)
 
         # Title + status
         title_row = QHBoxLayout()
         title_row.setSpacing(8)
-        title2 = QLabel("📋 审核中心")
+        title2 = QLabel("审核中心")
         title2.setObjectName("sideTitle")
         title_row.addWidget(title2)
         title_row.addStretch()
@@ -493,7 +492,7 @@ class ContractRenameApp(QWidget):
         self._review_status_pill.setObjectName("tagGray")
         title_row.addWidget(self._review_status_pill)
         # Edit cache button
-        cache_btn = QPushButton("✏️ 编辑缓存")
+        cache_btn = QPushButton("编辑缓存")
         cache_btn.setObjectName("smallBtn")
         cache_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         cache_btn.clicked.connect(self._open_cache_editor)
@@ -508,15 +507,15 @@ class ContractRenameApp(QWidget):
         self._ocr_cache_value.setCursor(Qt.CursorShape.PointingHandCursor)
         self._ocr_cache_value.mousePressEvent = lambda e: self._edit_cache_entry()
 
-        layout.addWidget(self._ocr_info_card("🏢 供应商", self._ocr_vendor_value))
-        layout.addWidget(self._ocr_info_card("🏷️ 合同号", self._ocr_contract_value))
-        layout.addWidget(self._ocr_info_card("📅 日期",   self._ocr_date_value))
-        layout.addWidget(self._ocr_info_card("💾 缓存命中", self._ocr_cache_value))
+        layout.addWidget(self._ocr_info_card("供应商", self._ocr_vendor_value))
+        layout.addWidget(self._ocr_info_card("合同号", self._ocr_contract_value))
+        layout.addWidget(self._ocr_info_card("日期",   self._ocr_date_value))
+        layout.addWidget(self._ocr_info_card("缓存命中", self._ocr_cache_value))
 
         # Confidence
         conf_row = QHBoxLayout()
         conf_row.setSpacing(6)
-        conf_row.addWidget(QLabel("📊 识别状态"))
+        conf_row.addWidget(QLabel("识别状态"))
         conf_row.addStretch()
         self._ocr_conf_pill = QLabel("-")
         self._ocr_conf_pill.setObjectName("tagGray")
@@ -524,7 +523,7 @@ class ContractRenameApp(QWidget):
         layout.addLayout(conf_row)
 
         # OCR text preview
-        self.ocr_toggle = QPushButton("📝 识别文字")
+        self.ocr_toggle = QPushButton("识别文字")
         self.ocr_toggle.setObjectName("collapseBtn")
         self.ocr_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
         self.ocr_toggle.clicked.connect(self._toggle_ocr)
@@ -534,14 +533,14 @@ class ContractRenameApp(QWidget):
         self.ocr_text.setObjectName("ocrBox")
         self.ocr_text.setReadOnly(True)
         self.ocr_text.setMinimumHeight(50)
-        self.ocr_text.setMaximumHeight(130)
+        self.ocr_text.setMaximumHeight(100)
         self.ocr_text.setVisible(False)
         layout.addWidget(self.ocr_text)
 
         # Log
         log_hdr = QHBoxLayout()
         log_hdr.setSpacing(6)
-        log_label = QLabel("🗒️ 处理日志")
+        log_label = QLabel("处理日志")
         log_label.setObjectName("sectionLabel")
         log_hdr.addWidget(log_label)
         log_hdr.addStretch()
@@ -551,8 +550,8 @@ class ContractRenameApp(QWidget):
         self.log_text.setObjectName("logBox")
         self.log_text.setReadOnly(True)
         self.log_text.setMaximumBlockCount(500)
-        self.log_text.setMinimumHeight(50)
-        self.log_text.setMaximumHeight(220)
+        self.log_text.setMinimumHeight(40)
+        self.log_text.setMaximumHeight(160)
         layout.addWidget(self.log_text)
 
         return panel
@@ -560,11 +559,11 @@ class ContractRenameApp(QWidget):
     def _ocr_info_card(self, title: str, value_label: QLabel) -> QFrame:
         card = QFrame()
         card.setObjectName("ocrInfoCard")
-        card.setFixedHeight(52)
+        card.setFixedHeight(46)
         card.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         lyt = QHBoxLayout(card)
-        lyt.setContentsMargins(14, 8, 14, 8)
-        lyt.setSpacing(10)
+        lyt.setContentsMargins(12, 6, 12, 6)
+        lyt.setSpacing(8)
 
         vbox = QVBoxLayout()
         vbox.setSpacing(2)
@@ -1092,7 +1091,11 @@ class ContractRenameApp(QWidget):
                         pass
                 elif mt == "update_file_paths":
                     old_name, new_path = payload
-                    self._file_paths[old_name] = Path(new_path)
+                    new_path = Path(new_path)
+                    self._file_paths[old_name] = new_path
+                    # Update file list display with new filename
+                    new_name = new_path.name
+                    self._update_file_list_item_with_new_name(old_name, new_name)
             except Exception:
                 import traceback
                 self._append_log(f"[内部错误] {traceback.format_exc()}")
@@ -1141,6 +1144,38 @@ class ContractRenameApp(QWidget):
         }
         icon = icons.get(status, "⏳")
         color = colors.get(status, text2)
+        self._set_file_list_item(filename, icon, color, status)
+
+    def _update_file_list_item_with_new_name(self, old_name: str, new_name: str) -> None:
+        """After renaming, update list item to show the new filename."""
+        for i in range(self.file_list.count()):
+            item = self.file_list.item(i)
+            if item and old_name in item.text():
+                st = item.data(Qt.ItemDataRole.UserRole) or "done"
+                icon = "✅"
+                color_ = _token(self._shell, "success", "#30D158")
+                size = self._file_sizes.get(old_name, "?")
+                item.setText(f"{icon}  {new_name}\n     {size} · {self._file_times.get(old_name, '')}")
+                item.setForeground(QColor(color_))
+                item.setData(Qt.ItemDataRole.UserRole, "done")
+                # Update all tracking dicts
+                self._file_statuses[new_name] = st
+                if old_name in self._file_statuses:
+                    del self._file_statuses[old_name]
+                if old_name in self._file_sizes:
+                    self._file_sizes[new_name] = self._file_sizes.pop(old_name)
+                if old_name in self._file_times:
+                    self._file_times[new_name] = self._file_times.pop(old_name)
+                if old_name in self._file_paths:
+                    pass  # already updated by update_file_paths handler
+                # Re-apply filter
+                filter_text = self.search_box.text().strip().lower() if hasattr(self, "search_box") else ""
+                matches_search = (not filter_text) or (filter_text in item.text().lower())
+                matches_filter = self._filter_matches(item)
+                item.setHidden(not (matches_search and matches_filter))
+                break
+
+    def _set_file_list_item(self, filename: str, icon: str, color: str, status: str) -> None:
         size = self._file_sizes.get(filename, "?")
 
         for i in range(self.file_list.count()):
@@ -1362,7 +1397,7 @@ class ContractRenameApp(QWidget):
     def _toggle_ocr(self) -> None:
         self._ocr_visible = not self._ocr_visible
         self.ocr_text.setVisible(self._ocr_visible)
-        arrow = "📝 ▾" if self._ocr_visible else "📝 ▸"
+        arrow = "识别文字 ▾" if self._ocr_visible else "识别文字 ▸"
         self.ocr_toggle.setText(f"{arrow}  识别文字")
         if self._ocr_visible and self._pending_ocr_text:
             self.ocr_text.setPlainText(self._pending_ocr_text)
@@ -1441,13 +1476,19 @@ class ContractRenameApp(QWidget):
             self._append_log("供应商缓存已更新")
 
     # ═══════════════════════════════════════════════════════════════════════
-    # Theme dialog
+    # Theme toggle
     # ═══════════════════════════════════════════════════════════════════════
+    def _toggle_theme(self) -> None:
+        """Toggle between dark and light mode."""
+        new_mode = self._shell.toggle_theme()
+        mode_text = "亮色模式" if new_mode == "light" else "暗黑模式"
+        self._append_log(f"界面已切换为{mode_text}")
+        self._refresh_summary()
+
     def _open_theme_dialog(self) -> None:
         dlg = ThemeSettingsDialog(self, self._shell._theme_overrides)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             self._shell.reload_theme(dlg.current_theme)
-            # Refresh stat value colors
             self._refresh_summary()
 
     def resizeEvent(self, event) -> None:

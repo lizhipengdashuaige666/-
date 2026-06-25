@@ -1,7 +1,6 @@
 """Unified design tokens and QSS builder for 采购工作台.
 
-Dark mode — iOS-style layered surfaces: deep canvas, lifted cards,
-clear input-card-log hierarchy, high-contrast text on dark grounds.
+Two built-in themes: dark (default) and light (clean, layered, high-clarity).
 """
 
 from __future__ import annotations
@@ -57,6 +56,44 @@ TAG_RED    = "#FF453A"
 TAG_GRAY   = "#636368"
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Light-mode tokens — clean, airy, high clarity with clear card hierarchy
+# ═══════════════════════════════════════════════════════════════════════════
+
+L_PRIMARY   = "#0066CC"
+L_SUCCESS   = "#1B8A3D"
+L_WARNING   = "#CC7A00"
+L_DANGER    = "#D42A1F"
+
+L_TEXT      = "#1D1D1F"
+L_TEXT2     = "#6E6E73"
+L_TEXT3     = "#A1A1A6"
+
+L_BG        = "#F2F2F7"    # light grey canvas — subtle distinction from cards
+L_CARD      = "#FFFFFF"    # white cards float above the canvas
+L_CARD_ALT  = "#F9F9FB"    # slightly tinted inset areas
+
+L_INPUT_BG        = "#F5F5FA"
+L_INPUT_BG_FOCUS  = "#FFFFFF"
+L_TOOLBAR_BG      = "#FFFFFF"
+
+L_BORDER    = "#E5E5EA"    # card outlines — visible but not heavy
+L_BORDER_M  = "#D1D1D6"    # input borders
+L_BORDER_S  = "#E9E9ED"    # log/inset borders
+
+L_SELECTION_BG  = "#D6E8FF"  # soft blue tint
+L_HOVER_BG      = "#F2F2F7"
+
+L_LOG_BG        = "#F9F9FB"
+L_ERR_BG        = "#FEE2E2"
+L_WARN_BG       = "#FFF4DE"
+
+L_TAG_GREEN  = "#1B8A3D"
+L_TAG_ORANGE = "#CC7A00"
+L_TAG_BLUE   = "#0066CC"
+L_TAG_RED    = "#D42A1F"
+L_TAG_GRAY   = "#8E8E93"
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Spacing & Shape
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -95,6 +132,20 @@ TOKENS = {
     "input_bg_focus": INPUT_BG_FOCUS,
     "tag_green": TAG_GREEN, "tag_orange": TAG_ORANGE,
     "tag_blue": TAG_BLUE, "tag_red": TAG_RED, "tag_gray": TAG_GRAY,
+}
+
+LIGHT_TOKENS = {
+    "primary": L_PRIMARY, "success": L_SUCCESS, "warning": L_WARNING, "danger": L_DANGER,
+    "text": L_TEXT, "text2": L_TEXT2, "text3": L_TEXT3,
+    "bg": L_BG, "card": L_CARD, "card_alt": L_CARD_ALT,
+    "border": L_BORDER, "border_m": L_BORDER_M, "border_s": L_BORDER_S,
+    "selection_bg": L_SELECTION_BG, "selection_bg2": L_SELECTION_BG, "hover_bg": L_HOVER_BG,
+    "log_bg": L_LOG_BG, "err_bg": L_ERR_BG, "warn_bg": L_WARN_BG,
+    "err_text": L_DANGER,
+    "toolbar_bg": L_TOOLBAR_BG, "input_bg": L_INPUT_BG,
+    "input_bg_focus": L_INPUT_BG_FOCUS,
+    "tag_green": L_TAG_GREEN, "tag_orange": L_TAG_ORANGE,
+    "tag_blue": L_TAG_BLUE, "tag_red": L_TAG_RED, "tag_gray": L_TAG_GRAY,
 }
 
 _theme_path = Path(__file__).parent / "theme.json"
@@ -561,20 +612,42 @@ QPushButton:disabled {{ background: #2A2A30; color: {t_["text3"]}; border: 1px s
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Theme Persistence
-# ═══════════════════════════════════════════════════════════════════════════
+
 
 def load_theme() -> dict:
     try:
         if _theme_path.exists():
             data = json.loads(_theme_path.read_text(encoding="utf-8"))
             if isinstance(data, dict):
-                return {k: v for k, v in data.items() if k in TOKENS}
+                mode = data.get("_mode", "dark")
+                overrides = {k: v for k, v in data.items() if k != "_mode" and k in TOKENS}
+                overrides["_mode"] = mode
+                return overrides
     except Exception:
         pass
-    return {}
+    return {"_mode": "dark"}
 
 
 def save_theme(theme: dict) -> None:
     _theme_path.parent.mkdir(parents=True, exist_ok=True)
     _theme_path.write_text(json.dumps(theme, indent=2, ensure_ascii=False),
                            encoding="utf-8")
+
+
+def get_current_mode() -> str:
+    """Returns 'dark' or 'light' based on saved preference."""
+    t = load_theme()
+    return t.get("_mode", "dark")
+
+
+def build_for_mode(mode: str = "dark", overrides: dict | None = None) -> str:
+    """Build QSS for the given mode ('dark' or 'light')."""
+    if mode == "light":
+        base = dict(LIGHT_TOKENS)
+    else:
+        base = dict(TOKENS)
+    if overrides:
+        for k, v in overrides.items():
+            if k in base and not k.startswith("_"):
+                base[k] = v
+    return build(base)

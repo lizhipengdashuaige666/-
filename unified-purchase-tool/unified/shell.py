@@ -33,23 +33,24 @@ class UnifiedApp(QMainWindow):
         self.setAcceptDrops(True)
 
         self._theme_overrides = style.load_theme()
-        self._lazy_loaded: dict[int, bool] = {0: True, 1: False, 2: False}
+        # index 0 = 合同命名 (lazy), 1 = 合同发送台 (lazy), 2 = 水单识别 (direct)
+        self._lazy_loaded: dict[int, bool] = {0: False, 1: False, 2: True}
 
         # ── 页面 ──
         self.stack = QStackedWidget()
         self.stack.setStyleSheet(f"background: {style.BG};")
 
-        # index 0 — 水单识别（直接加载）
+        # index 2 — 水单识别（直接加载）
         self.watermark_page = WatermarkApp(parent=self, shell=self)
-        self.stack.addWidget(self.watermark_page)
 
-        # index 1, 2 — 占位（延迟加载）
+        # index 0, 1 — 占位（延迟加载）
         self.rename_page = None
         self.workbench_page = None
+        self._placeholder0 = QWidget()
         self._placeholder1 = QWidget()
-        self._placeholder2 = QWidget()
-        self.stack.addWidget(self._placeholder1)
-        self.stack.addWidget(self._placeholder2)
+        self.stack.addWidget(self._placeholder0)    # index 0: 合同命名
+        self.stack.addWidget(self._placeholder1)    # index 1: 合同发送台
+        self.stack.addWidget(self.watermark_page)   # index 2: 水单识别
 
         # ── 侧栏 ──
         self._nav_buttons: list[QPushButton] = []
@@ -64,7 +65,9 @@ class UnifiedApp(QMainWindow):
         hbox.addWidget(self.stack, 1)
         self.setCentralWidget(body)
 
-        self.setStyleSheet(style.build(self._theme_overrides))
+        self.setStyleSheet(style.build_for_mode(
+            self._theme_overrides.get("_mode", "dark"),
+            self._theme_overrides))
         self.stack.setCurrentIndex(0)
         if self._nav_buttons:
             self._nav_buttons[0].setChecked(True)
@@ -87,9 +90,9 @@ class UnifiedApp(QMainWindow):
         layout.addWidget(section)
 
         nav_items = [
-            ("水单识别", "银行付款水单自动识别与记账"),
             ("合同命名", "PDF 合同自动识别与重命名"),
             ("合同发送台", "合同与对账单发送到供应商群聊"),
+            ("水单识别", "银行付款水单自动识别与记账"),
         ]
         for i, (name, desc) in enumerate(nav_items):
             btn = QPushButton(name)
@@ -111,8 +114,8 @@ class UnifiedApp(QMainWindow):
         return w
 
     def _switch_page(self, index: int) -> None:
-        if index == 0:
-            # 直接加载，无需延迟
+        if index == 2:
+            # 水单识别 — 直接加载，无需延迟
             self.stack.setCurrentIndex(index)
             for i, btn in enumerate(self._nav_buttons):
                 btn.setChecked(i == index)
@@ -135,7 +138,8 @@ class UnifiedApp(QMainWindow):
             btn.setChecked(i == index)
 
     def _lazy_load_page(self, index: int) -> None:
-        if index == 1:
+        if index == 0:
+            # 合同命名
             sys.path.insert(0, str(_NAMING_PROJECT))
             from app.config import load_config
             from app.gui import ContractRenameApp
@@ -143,19 +147,20 @@ class UnifiedApp(QMainWindow):
             self.rename_page = ContractRenameApp(
                 self.naming_config, parent=self, shell=self,
             )
-            self.stack.removeWidget(self._placeholder1)
-            self._placeholder1.deleteLater()
-            self._placeholder1 = None
-            self.stack.insertWidget(1, self.rename_page)
+            self.stack.removeWidget(self._placeholder0)
+            self._placeholder0.deleteLater()
+            self._placeholder0 = None
+            self.stack.insertWidget(0, self.rename_page)
 
-        elif index == 2:
+        elif index == 1:
+            # 合同发送台
             sys.path.insert(0, str(_WORKBENCH_PROJECT))
             from gui.app import PurchaseWorkbench
             self.workbench_page = PurchaseWorkbench(parent=self, shell=self)
-            self.stack.removeWidget(self._placeholder2)
-            self._placeholder2.deleteLater()
-            self._placeholder2 = None
-            self.stack.insertWidget(2, self.workbench_page)
+            self.stack.removeWidget(self._placeholder1)
+            self._placeholder1.deleteLater()
+            self._placeholder1 = None
+            self.stack.insertWidget(1, self.workbench_page)
 
     # ── 拖放支持 ──────────────────────────────────────────────────────
     def dragEnterEvent(self, event) -> None:
@@ -208,4 +213,14 @@ class UnifiedApp(QMainWindow):
     def reload_theme(self, theme_overrides: dict | None = None) -> None:
         if theme_overrides is not None:
             self._theme_overrides = theme_overrides
-        self.setStyleSheet(style.build(self._theme_overrides))
+        mode = self._theme_overrides.get("_mode", "dark")
+        self.setStyleSheet(style.build_for_mode(mode, self._theme_overrides))
+
+    def toggle_theme(self) -> str:
+        """Switch between dark and light mode. Returns new mode name."""
+        mode = self._theme_overrides.get("_mode", "dark")
+        new_mode = "light" if mode == "dark" else "dark"
+        self._theme_overrides["_mode"] = new_mode
+        style.save_theme(self._theme_overrides)
+        self.setStyleSheet(style.build_for_mode(new_mode, self._theme_overrides))
+        return new_mode
