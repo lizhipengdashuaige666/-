@@ -5,7 +5,7 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QMainWindow,
+    QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
     QMessageBox, QPushButton,
     QStackedWidget, QVBoxLayout, QWidget,
 )
@@ -18,6 +18,12 @@ _PROJECTS = _HERE.parent
 _NAMING_PROJECT = _PROJECTS / "pdf-windows-11-python-3-12"
 _WORKBENCH_PROJECT = _PROJECTS / "wechat-wxwork-text-purchase-workbench-main"
 
+_NAV_ITEMS = [
+    ("合同命名", "PDF 合同自动识别与重命名"),
+    ("合同发送台", "合同与对账单发送到供应商群聊"),
+    ("水单识别", "银行付款水单自动识别与记账"),
+]
+
 
 class UnifiedApp(QMainWindow):
     """统一采购工具壳 — 侧栏导航 + 业务页面
@@ -28,8 +34,8 @@ class UnifiedApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("采购工作台")
-        self.resize(1100, 720)
-        self.setMinimumSize(900, 600)
+        self.resize(1200, 720)
+        self.setMinimumSize(980, 600)
         self.setAcceptDrops(True)
 
         self._theme_overrides = style.load_theme()
@@ -38,7 +44,9 @@ class UnifiedApp(QMainWindow):
 
         # ── 页面 ──
         self.stack = QStackedWidget()
-        self.stack.setStyleSheet(f"background: {style.BG};")
+        self.stack.setStyleSheet(
+            f"background: {self.theme_tokens().get('bg', style.BG)};"
+        )
 
         # index 2 — 水单识别（直接加载）
         self.watermark_page = WatermarkApp(parent=self, shell=self)
@@ -55,52 +63,53 @@ class UnifiedApp(QMainWindow):
         # ── 侧栏 ──
         self._nav_buttons: list[QPushButton] = []
         sidebar = self._build_sidebar()
+        topbar = self._build_topbar()
 
         # ── 布局 ──
+        content = QWidget()
+        content.setObjectName("contentArea")
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(0)
+        content_layout.addWidget(topbar)
+        content_layout.addWidget(self.stack, 1)
+
         body = QWidget()
         hbox = QHBoxLayout(body)
         hbox.setContentsMargins(0, 0, 0, 0)
         hbox.setSpacing(0)
         hbox.addWidget(sidebar)
-        hbox.addWidget(self.stack, 1)
+        hbox.addWidget(content, 1)
         self.setCentralWidget(body)
 
-        self.setStyleSheet(style.build_for_mode(
-            self._theme_overrides.get("_mode", "dark"),
-            self._theme_overrides))
-        self.stack.setCurrentIndex(0)
-        if self._nav_buttons:
-            self._nav_buttons[0].setChecked(True)
+        self._apply_theme()
+        self._switch_page(0)
 
     # ── 侧栏 ──────────────────────────────────────────────────────────
     def _build_sidebar(self) -> QWidget:
         w = QFrame()
         w.setObjectName("sharedSidebar")
-        w.setFixedWidth(220)
+        w.setFixedWidth(176)
         layout = QVBoxLayout(w)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setContentsMargins(10, 12, 10, 10)
+        layout.setSpacing(4)
 
         title = QLabel("采购工作台")
         title.setObjectName("appTitle")
         layout.addWidget(title)
 
-        section = QLabel("业务板块")
+        section = QLabel("快速入口")
         section.setObjectName("navSection")
         layout.addWidget(section)
 
-        nav_items = [
-            ("合同命名", "PDF 合同自动识别与重命名"),
-            ("合同发送台", "合同与对账单发送到供应商群聊"),
-            ("水单识别", "银行付款水单自动识别与记账"),
-        ]
-        for i, (name, desc) in enumerate(nav_items):
+        for i, (name, desc) in enumerate(_NAV_ITEMS):
             btn = QPushButton(name)
             btn.setObjectName("navItem")
             btn.setCheckable(True)
             btn.setFlat(True)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setToolTip(desc)
+            btn.setProperty("pageIndex", i)
             btn.clicked.connect(lambda checked, idx=i: self._switch_page(idx))
             self._nav_buttons.append(btn)
             layout.addWidget(btn)
@@ -113,12 +122,53 @@ class UnifiedApp(QMainWindow):
 
         return w
 
+    def _build_topbar(self) -> QWidget:
+        bar = QFrame()
+        bar.setObjectName("topbar")
+        bar.setFixedHeight(62)
+
+        layout = QHBoxLayout(bar)
+        layout.setContentsMargins(18, 10, 18, 10)
+        layout.setSpacing(14)
+
+        title_col = QVBoxLayout()
+        title_col.setSpacing(2)
+        self._module_title = QLabel(_NAV_ITEMS[0][0])
+        self._module_title.setObjectName("topbarTitle")
+        self._module_subtitle = QLabel(_NAV_ITEMS[0][1])
+        self._module_subtitle.setObjectName("topbarSubtitle")
+        title_col.addWidget(self._module_title)
+        title_col.addWidget(self._module_subtitle)
+        layout.addLayout(title_col)
+
+        layout.addStretch(1)
+
+        for i, (name, desc) in enumerate(_NAV_ITEMS):
+            btn = QPushButton(name)
+            btn.setObjectName("topNavItem")
+            btn.setCheckable(True)
+            btn.setFlat(True)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setToolTip(desc)
+            btn.setProperty("pageIndex", i)
+            btn.clicked.connect(lambda checked, idx=i: self._switch_page(idx))
+            self._nav_buttons.append(btn)
+            layout.addWidget(btn)
+
+        search = QLineEdit()
+        search.setObjectName("globalSearch")
+        search.setPlaceholderText("搜索供应商、合同、PO")
+        search.setReadOnly(True)
+        search.setFixedWidth(220)
+        layout.addWidget(search)
+
+        return bar
+
     def _switch_page(self, index: int) -> None:
         if index == 2:
             # 水单识别 — 直接加载，无需延迟
             self.stack.setCurrentIndex(index)
-            for i, btn in enumerate(self._nav_buttons):
-                btn.setChecked(i == index)
+            self._sync_navigation(index)
             return
 
         if not self._lazy_loaded.get(index):
@@ -134,8 +184,7 @@ class UnifiedApp(QMainWindow):
             self._lazy_loaded[index] = True
 
         self.stack.setCurrentIndex(index)
-        for i, btn in enumerate(self._nav_buttons):
-            btn.setChecked(i == index)
+        self._sync_navigation(index)
 
     def _lazy_load_page(self, index: int) -> None:
         if index == 0:
@@ -161,6 +210,13 @@ class UnifiedApp(QMainWindow):
             self._placeholder1.deleteLater()
             self._placeholder1 = None
             self.stack.insertWidget(1, self.workbench_page)
+
+    def _sync_navigation(self, index: int) -> None:
+        for btn in self._nav_buttons:
+            btn.setChecked(btn.property("pageIndex") == index)
+        if hasattr(self, "_module_title"):
+            self._module_title.setText(_NAV_ITEMS[index][0])
+            self._module_subtitle.setText(_NAV_ITEMS[index][1])
 
     # ── 拖放支持 ──────────────────────────────────────────────────────
     def dragEnterEvent(self, event) -> None:
@@ -210,11 +266,19 @@ class UnifiedApp(QMainWindow):
         event.accept()
 
     # ── 主题 API ──────────────────────────────────────────────────────
+    def theme_tokens(self) -> dict:
+        mode = self._theme_overrides.get("_mode", "dark")
+        return style.resolved_tokens(mode, self._theme_overrides)
+
+    def _apply_theme(self) -> None:
+        tokens = self.theme_tokens()
+        self.setStyleSheet(style.build(tokens))
+        self.stack.setStyleSheet(f"background: {tokens.get('bg', style.BG)};")
+
     def reload_theme(self, theme_overrides: dict | None = None) -> None:
         if theme_overrides is not None:
             self._theme_overrides = theme_overrides
-        mode = self._theme_overrides.get("_mode", "dark")
-        self.setStyleSheet(style.build_for_mode(mode, self._theme_overrides))
+        self._apply_theme()
 
     def toggle_theme(self) -> str:
         """Switch between dark and light mode. Returns new mode name."""
@@ -222,5 +286,5 @@ class UnifiedApp(QMainWindow):
         new_mode = "light" if mode == "dark" else "dark"
         self._theme_overrides["_mode"] = new_mode
         style.save_theme(self._theme_overrides)
-        self.setStyleSheet(style.build_for_mode(new_mode, self._theme_overrides))
+        self._apply_theme()
         return new_mode

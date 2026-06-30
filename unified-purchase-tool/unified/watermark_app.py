@@ -268,8 +268,8 @@ class WatermarkApp(QWidget):
 
     def _build_ui(self) -> None:
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setSpacing(16)
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(12)
 
         header = QLabel("水单自动识别")
         header.setObjectName("toolbarTitle")
@@ -281,8 +281,11 @@ class WatermarkApp(QWidget):
 
         list_card = QFrame()
         list_card.setObjectName("card")
+        list_card.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        if getattr(self._shell, '_theme_overrides', {}).get("_mode") == "light":
+            _style.apply_shadow(list_card, blur=12, offset=(0, 3), alpha=0.045)
         lc = QVBoxLayout(list_card)
-        lc.setContentsMargins(14, 14, 14, 14)
+        lc.setContentsMargins(14, 12, 14, 12)
         lc.setSpacing(8)
 
         list_header = QHBoxLayout()

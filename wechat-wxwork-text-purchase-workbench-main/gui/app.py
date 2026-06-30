@@ -45,15 +45,18 @@ _PRIMARY = "#0A84FF"
 
 def _status_colors(shell: object | None = None) -> dict[str, str]:
     """Return status→color map from current theme tokens."""
-    t = dict(_style.TOKENS)
-    if shell is not None and hasattr(shell, '_theme_overrides'):
+    if shell is not None and hasattr(shell, 'theme_tokens'):
+        t = shell.theme_tokens()
+    else:
+        t = dict(_style.TOKENS)
+    if shell is not None and hasattr(shell, '_theme_overrides') and not hasattr(shell, 'theme_tokens'):
         t.update(shell._theme_overrides or {})
     return {
         "已发送": t.get("success", "#30D158"),
         "发送失败": t.get("danger", "#FF453A"),
         "待配置": t.get("warning", "#FF9F0A"),
         "请确认群聊": t.get("primary", "#0A84FF"),
-        "已跳过": t.get("text3", "#6C6C72"),
+        "已跳过": t.get("text3", "#5F7288"),
     }
 
 ADAPTERS = {
@@ -180,8 +183,8 @@ class PurchaseWorkbench(QWidget):
 
     def _build_ui(self) -> None:
         main = QHBoxLayout(self)
-        main.setContentsMargins(24, 24, 24, 24)
-        main.setSpacing(20)
+        main.setContentsMargins(18, 18, 18, 18)
+        main.setSpacing(16)
 
         left = QVBoxLayout()
         left.setSpacing(12)
@@ -206,25 +209,30 @@ class PurchaseWorkbench(QWidget):
         f = QFrame()
         f.setObjectName(name)
         f.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        if getattr(self, '_shell', None) is not None:
+            mode = getattr(self._shell, '_theme_overrides', {}).get("_mode", "dark")
+            if mode == "light":
+                _style.apply_shadow(f, blur=12, offset=(0, 3), alpha=0.045)
         return f
 
     def _build_drop_panel(self) -> QWidget:
         panel = self._build_panel_frame("dropPanel")
+        panel.setFixedHeight(108)
         layout = QHBoxLayout(panel)
-        layout.setContentsMargins(18, 14, 18, 14)
+        layout.setContentsMargins(18, 12, 18, 12)
 
         text = QVBoxLayout()
-        label = QLabel("📎 拖入 PDF 或采购订单文件夹")
+        label = QLabel("拖入 PDF 文件到这里")
         label.setObjectName("dropTitle")
-        hint = QLabel("📄 支持：PO、双章合同、对账单、供应商往来对账单")
+        hint = QLabel("或点击右侧按钮选择文件/文件夹")
         hint.setObjectName("hint")
         text.addWidget(label)
         text.addWidget(hint)
 
-        add_pdf = QPushButton("📄 选择 PDF")
+        add_pdf = QPushButton("选择 PDF")
         add_pdf.setObjectName("primaryBtn")
         add_pdf.clicked.connect(self.choose_pdf)
-        add_folder = QPushButton("📁 选择文件夹")
+        add_folder = QPushButton("选择文件夹")
         add_folder.setObjectName("secondaryBtn")
         add_folder.clicked.connect(self.choose_folder)
 
@@ -244,7 +252,7 @@ class PurchaseWorkbench(QWidget):
         filter_row.setSpacing(10)
 
         self.supplier_filter = QLineEdit()
-        self.supplier_filter.setPlaceholderText("筛选供应商...")
+        self.supplier_filter.setPlaceholderText("筛选供应商")
         self.supplier_filter.textChanged.connect(self._refresh_table)
 
         self.type_filter = QComboBox()
@@ -275,7 +283,7 @@ class PurchaseWorkbench(QWidget):
         # Divider
         sep = QFrame()
         sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet("color: #3A3A3E;")
+        sep.setStyleSheet("color: #E1EAF5; background: #E1EAF5;")
         sep.setFixedHeight(1)
         layout.addWidget(sep)
 
@@ -331,10 +339,10 @@ class PurchaseWorkbench(QWidget):
         w = QWidget()
         layout = QVBoxLayout(w)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        icon = QLabel("拖拽 PDF 文件到此处开始")
+        icon = QLabel("暂无订单")
         icon.setObjectName("dropTitle")
         icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        hint = QLabel("支持 PO、双章合同、对账单")
+        hint = QLabel("拖拽 PDF 文件开始处理")
         hint.setObjectName("hint")
         hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addStretch()
@@ -346,9 +354,8 @@ class PurchaseWorkbench(QWidget):
     def _build_actions(self) -> QWidget:
         panel = self._build_panel_frame("panel")
         layout = QHBoxLayout(panel)
-        self.send_button = QPushButton("直接发送当前群聊")
-        self.send_button.setObjectName("primaryBtn")
-        self.send_button.clicked.connect(self.send_selected)
+        layout.setContentsMargins(14, 10, 14, 10)
+        layout.setSpacing(10)
         self.search_button = QPushButton("搜索并确认发送")
         self.search_button.setObjectName("secondaryBtn")
         self.search_button.clicked.connect(self.search_selected)
@@ -358,20 +365,23 @@ class PurchaseWorkbench(QWidget):
         skip_button = QPushButton("跳过选中")
         skip_button.setObjectName("secondaryBtn")
         skip_button.clicked.connect(self.skip_selected)
+        self.send_button = QPushButton("发送当前群聊")
+        self.send_button.setObjectName("primaryBtn")
+        self.send_button.clicked.connect(self.send_selected)
         clear_button = QPushButton("清空列表")
         clear_button.setObjectName("dangerButton")
         clear_button.clicked.connect(self.clear_tasks)
-        layout.addWidget(self.send_button)
         layout.addWidget(self.search_button)
         layout.addWidget(self.select_all_button)
         layout.addWidget(skip_button)
         layout.addStretch(1)
+        layout.addWidget(self.send_button)
         layout.addWidget(clear_button)
         return panel
 
     def _build_sidebar(self) -> QWidget:
         panel = self._build_panel_frame("sidebar")
-        panel.setFixedWidth(330)
+        panel.setFixedWidth(315)
         layout = QVBoxLayout(panel)
         layout.setSpacing(12)
 
@@ -433,7 +443,9 @@ class PurchaseWorkbench(QWidget):
         layout.addWidget(message_title)
         layout.addLayout(message_tabs)
         layout.addWidget(self.message_preview)
-        layout.addWidget(QLabel("🗒️ 运行记录"))
+        log_title = QLabel("运行记录")
+        log_title.setObjectName("sectionTitle")
+        layout.addWidget(log_title)
         layout.addWidget(self.log_box, 1)
         self._update_message_preview()
         return panel
@@ -955,11 +967,14 @@ class PurchaseWorkbench(QWidget):
 
     def _log(self, text: str) -> None:
         now = datetime.now().strftime("%H:%M:%S")
-        t = dict(_style.TOKENS)
-        if getattr(self, '_shell', None) is not None and hasattr(self._shell, '_theme_overrides'):
+        if getattr(self, '_shell', None) is not None and hasattr(self._shell, 'theme_tokens'):
+            t = self._shell.theme_tokens()
+        else:
+            t = dict(_style.TOKENS)
+        if getattr(self, '_shell', None) is not None and hasattr(self._shell, '_theme_overrides') and not hasattr(self._shell, 'theme_tokens'):
             t.update(self._shell._theme_overrides or {})
         primary = t.get("primary", _PRIMARY)
-        text_c = t.get("text", "#F5F5F7")
+        text_c = t.get("text", "#182536")
         self.log_box.appendHtml(
             f'<div style="color:{text_c}; padding:2px 0; border-left:3px solid {primary};'
             f'padding-left:6px; margin:1px 0;">{now}  {text}</div>'

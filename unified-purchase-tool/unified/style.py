@@ -97,10 +97,10 @@ L_TAG_GRAY   = "#8E8E93"
 # Spacing & Shape
 # ═══════════════════════════════════════════════════════════════════════════
 
-R_SM  = 7
-R_MD  = 12    # buttons, list items
-R_LG  = 18    # cards
-R_XL  = 20    # drop zones
+R_SM  = 6
+R_MD  = 8     # buttons, list items
+R_LG  = 8     # cards
+R_XL  = 10    # drop zones
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Typography
@@ -148,6 +148,21 @@ LIGHT_TOKENS = {
     "tag_blue": L_TAG_BLUE, "tag_red": L_TAG_RED, "tag_gray": L_TAG_GRAY,
 }
 
+LIGHT_TOKENS.update({
+    "primary": "#2775D1", "success": "#1AA36F",
+    "warning": "#D98A21", "danger": "#D94A42",
+    "text": "#182536", "text2": "#40556D", "text3": "#5F7288",
+    "bg": "#F3F7FC", "card": "#FFFFFF", "card_alt": "#F8FBFF",
+    "border": "#E4ECF7", "border_m": "#D4E0EE", "border_s": "#EEF3FA",
+    "selection_bg": "#E8F2FF", "selection_bg2": "#EAF4FF",
+    "hover_bg": "#F4F8FD",
+    "log_bg": "#F8FBFF", "warn_bg": "#FFF6E6",
+    "toolbar_bg": "#F8FBFF", "input_bg": "#FFFFFF",
+    "input_bg_focus": "#FFFFFF",
+    "tag_green": "#1AA36F", "tag_orange": "#D98A21",
+    "tag_blue": "#2775D1", "tag_red": "#D94A42", "tag_gray": "#93A4BA",
+})
+
 _theme_path = Path(__file__).parent / "theme.json"
 
 
@@ -179,6 +194,59 @@ def _alpha(hex_color: str, a: float) -> str:
     """Return the color with a given alpha as rgba()."""
     c = QColor(hex_color)
     return f"rgba({c.red()},{c.green()},{c.blue()},{a})"
+
+
+def resolved_tokens(mode: str = "dark", overrides: dict | None = None) -> dict:
+    """Return the full effective token set for a saved theme mode."""
+    base = dict(LIGHT_TOKENS if mode == "light" else TOKENS)
+    if overrides:
+        for k, v in overrides.items():
+            if k in base and not k.startswith("_"):
+                base[k] = v
+    base["_mode"] = mode
+    return base
+
+
+def _is_light_theme(t_: dict) -> bool:
+    return t_.get("_mode") == "light" or t_.get("bg") == LIGHT_TOKENS["bg"]
+
+
+def _surface_values(t_: dict) -> dict[str, str]:
+    if not _is_light_theme(t_):
+        return {
+            "canvas": t_["bg"],
+            "sidebar": t_["card"],
+            "card": t_["card"],
+            "card_strong": t_["card"],
+            "inset": t_["card_alt"],
+            "control": t_["input_bg"],
+            "control_focus": t_["input_bg_focus"],
+            "border": t_["border"],
+            "border_soft": t_["border_s"],
+            "divider": t_["border"],
+            "nav_hover": "rgba(255,255,255,0.06)",
+            "disabled": "#2A2A30",
+            "scroll": "rgba(255,255,255,0.10)",
+            "scroll_hover": "rgba(255,255,255,0.18)",
+            "table_header": t_["card"],
+        }
+    return {
+        "canvas": "#F3F7FC",
+        "sidebar": "#EDF4FD",
+        "card": "#FFFFFF",
+        "card_strong": "#FFFFFF",
+        "inset": "#F8FBFF",
+        "control": "#FFFFFF",
+        "control_focus": "#FFFFFF",
+        "border": "#E1EAF5",
+        "border_soft": "#EEF3FA",
+        "divider": "#E1EAF5",
+        "nav_hover": "#F8FBFF",
+        "disabled": "#EDF3FA",
+        "scroll": "rgba(120,143,170,0.28)",
+        "scroll_hover": "rgba(92,116,146,0.45)",
+        "table_header": "#F8FBFF",
+    }
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -236,6 +304,7 @@ def build(theme: dict | None = None) -> str:
     prim_lighter  = _lighten(p, 0.88)
     danger_dark   = _darken(d)
     danger_darker = _darken(d, 0.20)
+    sv = _surface_values(t_)
 
     return f"""
 /* ==================================================================
@@ -243,9 +312,9 @@ def build(theme: dict | None = None) -> str:
    Canvas {t_["bg"]} / Cards {t_["card"]} / Inputs {t_["input_bg"]} / Insets {t_["log_bg"]}
    ================================================================== */
 
-QMainWindow {{ background: {t_["bg"]}; }}
+QMainWindow {{ background: {sv["canvas"]}; }}
 QMainWindow > QWidget {{
-    background: {t_["bg"]}; color: {t_["text"]};
+    background: {sv["canvas"]}; color: {t_["text"]};
     font-family: {FONT}; font-size: 13px; font-weight: {W_REG};
 }}
 
@@ -254,60 +323,90 @@ QLabel {{ color: {t_["text"]}; }}
 
 /* ---- Shared Sidebar ---- */
 QFrame#sharedSidebar {{
-    background: {t_["card"]}; border: 0; border-right: 1px solid {t_["border"]};
+    background: {sv["sidebar"]}; border: 0; border-right: 1px solid {sv["divider"]};
 }}
 QLabel#appTitle {{
-    font-size: 21px; font-weight: {W_BOLD}; color: {t_["text"]};
-    padding: 20px 18px 8px 18px;
+    font-size: 15px; font-weight: {W_BOLD}; color: {t_["text"]};
+    padding: 10px 6px 10px 6px;
 }}
 QLabel#navSection {{
-    font-size: 11px; font-weight: {W_SB}; color: {t_["text2"]};
-    letter-spacing: 0.3px; padding: 6px 18px 2px 18px; margin-top: 10px;
+    font-size: 11px; font-weight: {W_SB}; color: {t_["text3"]};
+    letter-spacing: 0px; padding: 10px 6px 4px 6px; margin-top: 2px;
 }}
 QPushButton#navItem {{
-    background: transparent; color: {t_["text"]}; border: 0; border-radius: {R_MD}px;
-    padding: 10px 18px; font-weight: {W_MED}; font-size: 14px; text-align: left;
+    background: transparent; color: {t_["text"]}; border: 1px solid transparent; border-radius: {R_MD}px;
+    padding: 9px 10px; font-weight: {W_MED}; font-size: 13px; text-align: left;
 }}
-QPushButton#navItem:hover {{ background: rgba(255,255,255,0.06); }}
+QPushButton#navItem:hover {{ background: {sv["nav_hover"]}; }}
 QPushButton#navItem:checked {{
     background: {t_["selection_bg"]}; color: {p}; font-weight: {W_SB};
+    border: 1px solid #D5E7FF;
 }}
 QLabel#versionLabel {{
-    font-size: 11px; color: {t_["text3"]}; padding: 8px 18px;
+    font-size: 11px; color: {t_["text3"]}; padding: 8px 6px;
+}}
+
+QWidget#contentArea {{
+    background: {sv["canvas"]};
+}}
+QFrame#topbar {{
+    background: #F8FBFF; border: 0; border-bottom: 1px solid {sv["divider"]};
+}}
+QLabel#topbarTitle {{
+    font-size: 16px; font-weight: {W_BOLD}; color: {t_["text"]};
+}}
+QLabel#topbarSubtitle {{
+    font-size: 11px; color: {t_["text2"]};
+}}
+QPushButton#topNavItem {{
+    background: transparent; color: {t_["text"]}; border: 1px solid transparent;
+    border-radius: {R_MD}px; padding: 7px 11px; min-height: 28px;
+    font-size: 12px; font-weight: {W_SB};
+}}
+QPushButton#topNavItem:hover {{
+    background: #FFFFFF; color: {t_["text"]}; border-color: {sv["border"]};
+}}
+QPushButton#topNavItem:checked {{
+    background: {t_["selection_bg"]}; color: {p}; border-color: #CFE2FF;
+}}
+QLineEdit#globalSearch {{
+    background: #FFFFFF; color: {t_["text2"]}; border: 1px solid {sv["border"]};
+    border-radius: {R_MD}px; padding: 7px 12px; font-size: 12px;
+    placeholder-text-color: {t_["text3"]};
 }}
 
 /* ---- Cards — floating dark surfaces, radius 18px ---- */
 QFrame#sideCard {{
-    background: {t_["card"]}; border: 2px solid {t_["border"]}; border-radius: {R_LG}px;
+    background: {sv["card"]}; border: 1px solid {sv["border"]}; border-radius: {R_LG}px;
 }}
 QFrame#centerCard {{
-    background: {t_["card"]}; border: 2px solid {t_["border"]}; border-radius: {R_LG}px;
+    background: {sv["card"]}; border: 1px solid {sv["border"]}; border-radius: {R_LG}px;
 }}
 QFrame#reviewCard {{
-    background: {t_["card"]}; border: 2px solid {t_["border"]}; border-radius: {R_LG}px;
+    background: {sv["card"]}; border: 1px solid {sv["border"]}; border-radius: {R_LG}px;
 }}
 QFrame#statCard {{
-    background: {t_["card"]}; border: 2px solid {t_["border"]}; border-radius: {R_LG}px;
+    background: {sv["card"]}; border: 1px solid {sv["border"]}; border-radius: {R_LG}px;
 }}
 QFrame#renameCard {{
-    background: {t_["card"]}; border: 2px solid {bm}; border-radius: {R_LG}px;
+    background: {sv["card"]}; border: 1px solid {sv["border"]}; border-radius: {R_LG}px;
 }}
 QFrame#card {{
-    background: {t_["card"]}; border: 2px solid {t_["border"]}; border-radius: {R_LG}px;
+    background: {sv["card"]}; border: 1px solid {sv["border"]}; border-radius: {R_LG}px;
 }}
 
 /* ---- Inset panels (log, OCR info, preview) ---- */
 QFrame#ocrInfoCard {{
-    background: {t_["card"]}; border: 1px solid {bs}; border-radius: 12px;
+    background: {sv["inset"]}; border: 1px solid {sv["border_soft"]}; border-radius: 12px;
 }}
 QFrame#previewCard {{
-    background: {t_["card_alt"]}; border: 2px dashed {bm}; border-radius: {R_LG}px;
+    background: {sv["inset"]}; border: 1px dashed {bm}; border-radius: {R_LG}px;
 }}
 QFrame#previewCard:hover {{ border-color: {p}; background: {_lighten(t_["card_alt"], 0.06)}; }}
 
 /* ---- Workbench: drop panel ---- */
 QFrame#dropPanel {{
-    background: {t_["card"]}; border: 3px dashed {bm}; border-radius: {R_XL}px;
+    background: {sv["card"]}; border: 1px dashed {bm}; border-radius: {R_XL}px;
 }}
 QFrame#dropPanel:hover {{ border-color: {p}; }}
 QLabel#dropTitle {{
@@ -319,13 +418,13 @@ QLabel#hint {{
 
 /* ---- Workbench: panel / sidebar ---- */
 QFrame#panel, QFrame#sidebar {{
-    background: {t_["card"]}; border: 2px solid {t_["border"]}; border-radius: {R_LG}px;
+    background: {sv["card"]}; border: 1px solid {sv["border"]}; border-radius: {R_LG}px;
 }}
 
 /* ---- Buttons — min-height 34px, radius 12px ---- */
 QPushButton {{
-    min-height: 34px; border-radius: {R_MD}px; padding: 6px 16px;
-    font-size: 13px; font-weight: {W_SB};
+    min-height: 30px; border-radius: {R_MD}px; padding: 5px 13px;
+    font-size: 12px; font-weight: {W_SB};
 }}
 QPushButton#primaryBtn {{
     background: {p}; color: #FFFFFF; border: 1px solid {p};
@@ -333,15 +432,15 @@ QPushButton#primaryBtn {{
 QPushButton#primaryBtn:hover {{ background: {prim_dark}; border-color: {prim_dark}; }}
 QPushButton#primaryBtn:pressed {{ background: {prim_darker}; border-color: {prim_darker}; }}
 QPushButton#primaryBtn:disabled {{
-    background: {t_["border"]}; color: {t_["text3"]}; border: 1px solid {bm};
+    background: {sv["disabled"]}; color: {t_["text2"]}; border: 1px solid {bm};
 }}
 QPushButton#secondaryBtn {{
-    background: {t_["card"]}; color: {p}; border: 1px solid {bm};
+    background: {sv["control"]}; color: {p}; border: 1px solid {sv["border"]};
 }}
 QPushButton#secondaryBtn:hover {{ background: {prim_light}; border-color: {p}; }}
 QPushButton#secondaryBtn:pressed {{ background: {prim_lighter}; }}
 QPushButton#secondaryBtn:disabled {{
-    background: transparent; color: {t_["text3"]}; border: 1px solid transparent;
+    background: {sv["disabled"]}; color: {t_["text2"]}; border: 1px solid {sv["border_soft"]};
 }}
 QPushButton#stopBtn {{
     background: {t_["err_bg"]}; color: {d};
@@ -359,15 +458,15 @@ QPushButton#dangerBtn {{
 }}
 QPushButton#dangerBtn:hover {{ background: {danger_dark}; border-color: {danger_dark}; }}
 QPushButton#dangerBtn:disabled {{
-    background: {t_["card"]}; color: {d}; border: 1px solid {_alpha(d, 0.25)};
+    background: {sv["control"]}; color: {d}; border: 1px solid {_alpha(d, 0.25)};
 }}
 
 /* ---- Ghost / icon / danger outline buttons ---- */
 QPushButton#ghostButton {{
-    background: {t_["input_bg"]}; color: {t_["text"]}; border: 0;
+    background: {sv["control"]}; color: {t_["text"]}; border: 1px solid transparent;
     border-radius: {R_MD}px; padding: 6px 14px; font-weight: {W_MED}; font-size: 12px;
 }}
-QPushButton#ghostButton:hover {{ background: {t_["border"]}; }}
+QPushButton#ghostButton:hover {{ background: {sv["nav_hover"]}; border-color: {sv["border_soft"]}; }}
 QPushButton#iconButton {{
     background: transparent; color: {p}; border: 0;
     border-radius: {R_MD}px; padding: 4px 10px; font-weight: {W_MED}; font-size: 12px;
@@ -382,23 +481,23 @@ QPushButton#dangerButton:hover {{ background: {d}; color: #FFFFFF; }}
 
 /* ---- Filter / chip buttons ---- */
 QPushButton#filterBtn {{
-    background: {t_["input_bg"]}; border: 1px solid transparent; border-radius: {R_SM}px;
+    background: {sv["control"]}; border: 1px solid transparent; border-radius: {R_SM}px;
     padding: 5px 12px; font-size: 11px; font-weight: {W_SB}; color: {t_["text2"]};
 }}
-QPushButton#filterBtn:hover {{ background: {t_["border"]}; color: {t_["text"]}; }}
+QPushButton#filterBtn:hover {{ background: {sv["nav_hover"]}; color: {t_["text"]}; }}
 QPushButton#filterBtn:checked {{
     background: {t_["selection_bg"]}; color: {p};
 }}
 
 /* ---- File List — radius 12px, min-height 44px ---- */
 QListWidget {{
-    background: {t_["card"]}; border: 0; border-radius: {R_MD}px;
+    background: transparent; border: 0; border-radius: {R_MD}px;
     padding: 2px 0; outline: none;
 }}
 QListWidget::item {{
-    border-radius: {R_MD}px; padding: 10px 16px; margin: 2px 4px;
-    color: {t_["text"]}; font-size: 12px; font-weight: {W_MED}; min-height: 52px;
-    background: {t_["card"]};
+    border-radius: {R_MD}px; padding: 8px 12px; margin: 2px 4px;
+    color: {t_["text"]}; font-size: 12px; font-weight: {W_MED}; min-height: 42px;
+    background: transparent;
 }}
 QListWidget::item:hover:!selected {{
     background: {t_["hover_bg"]};
@@ -415,13 +514,14 @@ QLabel#sectionLabel     {{ font-size: 11px; font-weight: {W_SB}; color: {t_["tex
 QLabel#cardTitle        {{ font-size: 15px; font-weight: 620; color: {t_["text"]}; }}
 QLabel#sideTitle        {{ font-size: 15px; font-weight: 620; color: {t_["text"]}; }}
 QLabel#sideSubtitle     {{ font-size: 11px; color: {t_["text2"]}; }}
-QLabel#statValue        {{ font-size: 42px; font-weight: 720; letter-spacing: -0.5px; }}
-QLabel#statValue[statColor="#F5F5F7"] {{ color: {t_["text"]}; }}
-QLabel#statValue[statColor="#30D158"] {{ color: {s}; }}
-QLabel#statValue[statColor="#FF453A"] {{ color: {d}; }}
-QLabel#statValue[statColor="#0A84FF"] {{ color: {p}; }}
+QLabel#statValue        {{ font-size: 28px; font-weight: 720; letter-spacing: 0px; }}
+QLabel#statValue[statRole="pending"] {{ color: {t_["text"]}; }}
+QLabel#statValue[statRole="done"]    {{ color: {s}; }}
+QLabel#statValue[statRole="failed"]  {{ color: {d}; }}
+QLabel#statValue[statRole="review"]  {{ color: {p}; }}
 QLabel#statLabel        {{ font-size: 13px; font-weight: {W_MED}; color: {t_["text2"]}; }}
 QLabel#infoValue        {{ font-size: 14px; font-weight: {W_BOLD}; color: {t_["text"]}; }}
+QLabel#ocrValue         {{ font-size: 13px; font-weight: 650; color: {t_["text"]}; background: transparent; }}
 QLabel#sectionTitle     {{ font-size: 11px; font-weight: {W_SB}; color: {t_["text2"]}; letter-spacing: -0.1px; margin-bottom: 2px; }}
 QLabel#groupLabel       {{ font-size: 11px; font-weight: 650; color: {t_["text"]}; letter-spacing: 0.3px; padding: 2px 0; }}
 
@@ -432,85 +532,96 @@ QLabel[status_success="true"]  {{ color: {s}; }}
 QLabel[status_error="true"]    {{ color: {d}; }}
 
 /* ---- Tags (pill-shaped) ---- */
-QLabel#tagGreen  {{ background: {t_["tag_green"]};  color: #FFFFFF; border-radius: 999px; padding: 2px 10px; font-weight: 560; font-size: 11px; }}
-QLabel#tagOrange {{ background: {t_["tag_orange"]}; color: #FFFFFF; border-radius: 999px; padding: 2px 10px; font-weight: 560; font-size: 11px; }}
-QLabel#tagBlue   {{ background: {t_["tag_blue"]};   color: #FFFFFF; border-radius: 999px; padding: 2px 10px; font-weight: 560; font-size: 11px; }}
-QLabel#tagRed    {{ background: {t_["tag_red"]};    color: #FFFFFF; border-radius: 999px; padding: 2px 10px; font-weight: 560; font-size: 11px; }}
-QLabel#tagGray   {{ background: {t_["tag_gray"]};   color: #FFFFFF; border-radius: 999px; padding: 2px 10px; font-weight: 560; font-size: 11px; }}
-QLabel#tagWarn   {{ background: {t_["warn_bg"]};    color: {w}; border-radius: 999px; padding: 2px 10px; font-weight: 560; font-size: 11px; }}
+QLabel#tagGreen  {{ background: {_alpha(s, 0.14)}; color: {s}; border: 1px solid {_alpha(s, 0.24)}; border-radius: 999px; padding: 3px 10px; font-weight: 650; font-size: 11px; }}
+QLabel#tagOrange {{ background: {_alpha(w, 0.14)}; color: {w}; border: 1px solid {_alpha(w, 0.24)}; border-radius: 999px; padding: 3px 10px; font-weight: 650; font-size: 11px; }}
+QLabel#tagBlue   {{ background: {_alpha(p, 0.13)}; color: {p}; border: 1px solid {_alpha(p, 0.24)}; border-radius: 999px; padding: 3px 10px; font-weight: 650; font-size: 11px; }}
+QLabel#tagRed    {{ background: {_alpha(d, 0.13)}; color: {d}; border: 1px solid {_alpha(d, 0.24)}; border-radius: 999px; padding: 3px 10px; font-weight: 650; font-size: 11px; }}
+QLabel#tagGray   {{ background: {sv["control"]}; color: {t_["text2"]}; border: 1px solid {sv["border"]}; border-radius: 999px; padding: 3px 10px; font-weight: 650; font-size: 11px; }}
+QLabel#tagWarn   {{ background: {t_["warn_bg"]}; color: {w}; border: 1px solid {_alpha(w, 0.24)}; border-radius: 999px; padding: 3px 10px; font-weight: 650; font-size: 11px; }}
+
+QPushButton#smallBtn {{
+    min-height: 28px; background: transparent; color: {p};
+    border: 1px solid {sv["border"]}; border-radius: {R_SM}px;
+    padding: 4px 10px; font-size: 12px; font-weight: {W_SB};
+}}
+QPushButton#smallBtn:hover {{
+    background: {_alpha(p, 0.08)}; border-color: {_alpha(p, 0.36)};
+}}
 
 /* ---- QLineEdit#suggestName ---- */
 QLineEdit#suggestName {{
     font-size: 19px; font-weight: 600; color: {t_["text"]};
-    background: {t_["input_bg"]}; border: 1px solid {bm};
+    background: {sv["control"]}; border: 1px solid {sv["border"]};
     border-radius: {R_LG}px; padding: 14px 18px;
 }}
 QLineEdit#suggestName:focus {{
-    border-color: {p}; background: {t_["input_bg_focus"]};
+    border-color: {p}; background: {sv["control_focus"]};
 }}
 
 /* ---- Generic inputs ---- */
 QLineEdit, QComboBox {{
-    background: {t_["input_bg"]}; color: {t_["text"]}; border: 1px solid {bm};
-    border-radius: {R_MD}px; padding: 8px 12px; font-size: 12px;
+    background: {sv["control"]}; color: {t_["text"]}; border: 1px solid {sv["border"]};
+    border-radius: {R_MD}px; padding: 7px 10px; font-size: 12px;
     selection-background-color: {p};
+    placeholder-text-color: {t_["text3"]};
 }}
 QLineEdit:focus, QComboBox:focus {{
-    background: {t_["input_bg_focus"]}; border: 1px solid {p};
+    background: {sv["control_focus"]}; border: 1px solid {p};
 }}
 QComboBox::drop-down {{ border: 0; width: 20px; }}
 QComboBox QAbstractItemView {{
-    background: {t_["card"]}; color: {t_["text"]}; border: 1px solid {t_["border"]};
+    background: {sv["card_strong"]}; color: {t_["text"]}; border: 1px solid {sv["border"]};
     border-radius: {R_MD}px; padding: 4px;
     selection-background-color: {t_["selection_bg"]};
 }}
 QLineEdit#searchBox {{
-    background: {t_["input_bg"]}; color: {t_["text"]}; border: 1px solid {bm};
-    border-radius: {R_MD}px; padding: 8px 12px; font-size: 12px;
+    background: {sv["control"]}; color: {t_["text"]}; border: 1px solid {sv["border"]};
+    border-radius: {R_MD}px; padding: 7px 10px; font-size: 12px;
+    placeholder-text-color: {t_["text3"]};
 }}
 QLineEdit#searchBox:focus {{
-    background: {t_["input_bg_focus"]}; border: 1px solid {p};
+    background: {sv["control_focus"]}; border: 1px solid {p};
 }}
 
 /* ---- Filter ComboBox (naming tool) ---- */
 QComboBox {{
-    background: {t_["input_bg"]}; color: {t_["text"]}; border: 1px solid {bm};
-    border-radius: {R_MD}px; padding: 8px 12px; font-size: 12px; font-weight: {W_MED};
+    background: {sv["control"]}; color: {t_["text"]}; border: 1px solid {sv["border"]};
+    border-radius: {R_MD}px; padding: 7px 10px; font-size: 12px; font-weight: {W_MED};
 }}
-QComboBox:hover {{ background: {t_["border"]}; }}
+QComboBox:hover {{ background: {sv["nav_hover"]}; }}
 QComboBox::drop-down {{ border: 0; width: 18px; }}
 QComboBox QAbstractItemView {{
-    background: {t_["card"]}; color: {t_["text"]}; border: 1px solid {t_["border"]};
+    background: {sv["card_strong"]}; color: {t_["text"]}; border: 1px solid {sv["border"]};
     border-radius: 8px; selection-background-color: {t_["selection_bg"]}; padding: 3px;
 }}
 
 /* ---- Log / OCR / Message Preview ---- */
 #logBox, #ocrBox {{
-    background: {t_["card"]}; border: 1px solid {bs}; border-radius: {R_MD}px;
+    background: {sv["inset"]}; border: 1px solid {sv["border_soft"]}; border-radius: {R_MD}px;
     padding: 12px; font-size: 12px; color: {t_["text"]};
     font-family: {FONT_MONO};
 }}
 QPlainTextEdit#messagePreview {{
-    background: {t_["input_bg"]}; color: {t_["text2"]}; border: 0; border-radius: {R_MD}px;
+    background: {sv["inset"]}; color: {t_["text2"]}; border: 0; border-radius: {R_MD}px;
     padding: 10px 11px;
     font-family: {FONT_MONO}; font-size: 12px; min-height: 76px; max-height: 100px;
 }}
 QPlainTextEdit#wbLogBox {{
-    background: {t_["card_alt"]}; color: {t_["text"]};
-    border: 1px solid {bs}; border-radius: {R_MD}px;
+    background: {sv["inset"]}; color: {t_["text"]};
+    border: 1px solid {sv["border_soft"]}; border-radius: {R_MD}px;
     padding: 12px; font-family: {FONT_MONO}; font-size: 12px;
 }}
 
 /* ---- ProgressBar — 5px height ---- */
 QProgressBar {{
-    background: {t_["border"]}; border: none; border-radius: 3px; height: 5px; font-size: 0;
+    background: {sv["border_soft"]}; border: none; border-radius: 3px; height: 5px; font-size: 0;
 }}
 QProgressBar::chunk {{ background: {p}; border-radius: 3px; }}
 
 /* ---- Radio Buttons (segmented control) ---- */
 QRadioButton {{
     font-size: 12px; font-weight: 580; color: {t_["text"]};
-    background: {t_["input_bg"]}; border: 1px solid {bm}; padding: 7px 14px; spacing: 0;
+    background: {sv["control"]}; border: 1px solid {sv["border"]}; padding: 7px 14px; spacing: 0;
 }}
 QRadioButton:first-child {{ border-top-left-radius: 8px; border-bottom-left-radius: 8px; }}
 QRadioButton:last-child  {{ border-top-right-radius: 8px; border-bottom-right-radius: 8px; }}
@@ -519,12 +630,12 @@ QRadioButton:checked {{ background: {p}; color: #FFFFFF; border-color: {p}; font
 
 /* ---- Message tab radio (workbench sidebar) ---- */
 QRadioButton#messageTab {{
-    background: {t_["input_bg"]}; color: {t_["text2"]}; border: 0; border-radius: {R_MD}px;
+    background: {sv["control"]}; color: {t_["text2"]}; border: 0; border-radius: {R_MD}px;
     padding: 7px 12px; font-weight: 560; font-size: 12px;
 }}
 QRadioButton#messageTab::indicator {{ width: 0; height: 0; }}
 QRadioButton#messageTab:checked {{ background: {p}; color: #FFFFFF; }}
-QRadioButton#messageTab:hover:!checked {{ background: {bm}; }}
+QRadioButton#messageTab:hover:!checked {{ background: {sv["nav_hover"]}; }}
 
 /* ---- Collapse button ---- */
 QPushButton#collapseBtn {{
@@ -535,7 +646,7 @@ QPushButton#collapseBtn:hover {{ color: {p}; }}
 
 /* ---- Workbench Table ---- */
 QTableWidget {{
-    background: {t_["card"]}; alternate-background-color: {t_["card_alt"]};
+    background: transparent; alternate-background-color: {sv["inset"]};
     border: 0; border-radius: {R_LG}px;
     gridline-color: transparent;
     selection-background-color: {t_["selection_bg"]}; selection-color: {t_["text"]};
@@ -543,9 +654,9 @@ QTableWidget {{
 QTableWidget::item {{ padding: 8px 6px; color: {t_["text"]}; }}
 QTableWidget::item:selected {{ color: {t_["text"]}; }}
 QHeaderView::section {{
-    background: {t_["card"]}; color: {t_["text2"]}; border: 0;
-    border-bottom: 1px solid {t_["border"]}; border-radius: 0;
-    padding: 10px 6px; font-weight: 560; font-size: 11px; letter-spacing: -0.1px;
+    background: {sv["table_header"]}; color: {t_["text2"]}; border: 0;
+    border-bottom: 1px solid {sv["divider"]}; border-radius: 0;
+    padding: 8px 6px; font-weight: 560; font-size: 11px; letter-spacing: 0px;
 }}
 
 /* ---- Tabs ---- */
@@ -561,52 +672,52 @@ QTabBar::tab:hover:!selected {{ color: {t_["text"]}; }}
 
 /* ---- Toolbar — segmented control style ---- */
 QWidget#toolbar {{
-    background: {t_["toolbar_bg"]}; border-bottom: 1px solid {t_["border"]};
+    background: {sv["card"]}; border-bottom: 1px solid {sv["divider"]};
 }}
 
 /* ---- StatusBar ---- */
 QStatusBar {{
-    background: {t_["card"]}; border-top: 1px solid {t_["border"]};
+    background: {sv["card"]}; border-top: 1px solid {sv["divider"]};
     color: {t_["text2"]}; font-size: 12px; min-height: 28px;
 }}
 
 /* ---- Splitter handle ---- */
-QSplitter::handle {{ background: {t_["border"]}; }}
+QSplitter::handle {{ background: {sv["divider"]}; }}
 
 /* ---- ScrollArea (preview) ---- */
 QScrollArea#previewScroll {{
-    background: {t_["card"]}; border: 1px solid {bs}; border-radius: {R_MD}px;
+    background: {sv["inset"]}; border: 1px solid {sv["border_soft"]}; border-radius: {R_MD}px;
 }}
 
 /* ---- Scrollbars — 5px wide, rounded ---- */
 QScrollBar:vertical {{ background: transparent; width: 5px; border-radius: 3px; }}
-QScrollBar::handle:vertical {{ background: rgba(255,255,255,0.10); border-radius: 3px; min-height: 20px; }}
-QScrollBar::handle:vertical:hover {{ background: rgba(255,255,255,0.18); }}
+QScrollBar::handle:vertical {{ background: {sv["scroll"]}; border-radius: 3px; min-height: 20px; }}
+QScrollBar::handle:vertical:hover {{ background: {sv["scroll_hover"]}; }}
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
 QScrollBar:horizontal {{ background: transparent; height: 5px; }}
-QScrollBar::handle:horizontal {{ background: rgba(255,255,255,0.10); border-radius: 3px; min-width: 20px; }}
+QScrollBar::handle:horizontal {{ background: {sv["scroll"]}; border-radius: 3px; min-width: 20px; }}
 QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{ width: 0; }}
 
 /* ---- Dialogs ---- */
 QDialog, QMessageBox {{
-    background-color: {t_["card"]}; color: {t_["text"]};
+    background-color: {sv["card_strong"]}; color: {t_["text"]};
 }}
 QDialog QLabel, QMessageBox QLabel {{
     color: {t_["text"]}; background: transparent;
 }}
 QDialog QPushButton, QMessageBox QPushButton {{
-    color: {t_["text"]}; background: {t_["input_bg"]}; border: 1px solid {bm};
+    color: {t_["text"]}; background: {sv["control"]}; border: 1px solid {sv["border"]};
     border-radius: {R_MD}px; padding: 6px 14px; min-width: 72px;
 }}
 QDialog QPushButton:hover, QMessageBox QPushButton:hover {{
-    background: {t_["border"]};
+    background: {sv["nav_hover"]};
 }}
 QDialog QLineEdit {{
-    background: {t_["card"]}; color: {t_["text"]}; border: 1px solid {p}; border-radius: 8px; padding: 7px 9px;
+    background: {sv["control_focus"]}; color: {t_["text"]}; border: 1px solid {p}; border-radius: 8px; padding: 7px 9px;
 }}
 
 /* ---- Disabled fallback ---- */
-QPushButton:disabled {{ background: #2A2A30; color: {t_["text3"]}; border: 1px solid {bm}; }}
+QPushButton:disabled {{ background: {sv["disabled"]}; color: {t_["text2"]}; border: 1px solid {bm}; }}
 """
 
 
@@ -625,7 +736,7 @@ def load_theme() -> dict:
                 return overrides
     except Exception:
         pass
-    return {"_mode": "dark"}
+    return {"_mode": "light"}
 
 
 def save_theme(theme: dict) -> None:
@@ -642,12 +753,4 @@ def get_current_mode() -> str:
 
 def build_for_mode(mode: str = "dark", overrides: dict | None = None) -> str:
     """Build QSS for the given mode ('dark' or 'light')."""
-    if mode == "light":
-        base = dict(LIGHT_TOKENS)
-    else:
-        base = dict(TOKENS)
-    if overrides:
-        for k, v in overrides.items():
-            if k in base and not k.startswith("_"):
-                base[k] = v
-    return build(base)
+    return build(resolved_tokens(mode, overrides))

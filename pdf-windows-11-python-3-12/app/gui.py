@@ -41,6 +41,8 @@ from unified import style as _style
 # Use _token() to resolve any color dynamically from the current theme.
 def _token(shell: object | None, key: str, fallback: str) -> str:
     """Return the current theme value for *key*, or *fallback* if unavailable."""
+    if shell is not None and hasattr(shell, 'theme_tokens'):
+        return shell.theme_tokens().get(key, fallback)
     if shell is not None and hasattr(shell, '_theme_overrides'):
         return (shell._theme_overrides or {}).get(key) or _style.TOKENS.get(key, fallback)
     return _style.TOKENS.get(key, fallback)
@@ -133,7 +135,7 @@ class ContractRenameApp(QWidget):
                 self._file_paths[fn] = Path(p)
                 item = QListWidgetItem(f"{fn}\n{size_str} · {self._file_times.get(fn, '')}")
                 item.setData(Qt.ItemDataRole.UserRole, "waiting")
-                item.setForeground(QColor(_token(self._shell, "text2", "#98989E")))
+                item.setForeground(QColor(_token(self._shell, "text2", "#40556D")))
                 self.file_list.addItem(item)
                 self._file_statuses[fn] = "waiting"
         self._refresh_summary()
@@ -145,27 +147,39 @@ class ContractRenameApp(QWidget):
         card = QFrame()
         card.setObjectName(name)
         card.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        _style.apply_shadow(card)
+        if getattr(self._shell, '_theme_overrides', {}).get("_mode") == "light":
+            _style.apply_shadow(card, blur=12, offset=(0, 3), alpha=0.045)
+        else:
+            _style.apply_shadow(card)
         return card
 
     def _build_ui(self) -> None:
         h_splitter = QSplitter(Qt.Orientation.Horizontal)
-        h_splitter.setHandleWidth(6)
-        border_color = _token(self._shell, "border", "#3A3A3E")
+        h_splitter.setChildrenCollapsible(False)
+        h_splitter.setHandleWidth(1)
+        border_color = _token(self._shell, "border_s", "#E8EEF6")
         h_splitter.setStyleSheet(f"QSplitter::handle {{ background-color: {border_color}; }}")
 
         left_panel = self._build_left_panel()
         center_panel = self._build_center_panel()
         right_panel = self._build_right_panel()
+        left_panel.setMinimumWidth(170)
+        left_panel.setMaximumWidth(215)
+        center_panel.setMinimumWidth(360)
+        right_panel.setMinimumWidth(210)
+        right_panel.setMaximumWidth(245)
 
         h_splitter.addWidget(left_panel)
         h_splitter.addWidget(center_panel)
         h_splitter.addWidget(right_panel)
 
-        h_splitter.setSizes([320, 600, 320])
+        h_splitter.setStretchFactor(0, 0)
+        h_splitter.setStretchFactor(1, 1)
+        h_splitter.setStretchFactor(2, 0)
+        h_splitter.setSizes([190, 620, 225])
 
         root = QHBoxLayout(self)
-        root.setContentsMargins(20, 20, 20, 20)
+        root.setContentsMargins(12, 12, 12, 12)
         root.addWidget(h_splitter)
 
 
@@ -235,8 +249,9 @@ class ContractRenameApp(QWidget):
         layout.addWidget(self._build_stat_row())
 
         v_splitter = QSplitter(Qt.Orientation.Vertical)
-        v_splitter.setHandleWidth(6)
-        border_color = _token(self._shell, "border", "#3A3A3E")
+        v_splitter.setChildrenCollapsible(False)
+        v_splitter.setHandleWidth(1)
+        border_color = _token(self._shell, "border_s", "#E8EEF6")
         v_splitter.setStyleSheet(f"QSplitter::handle {{ background-color: {border_color}; }}")
         v_splitter.addWidget(self._build_preview_card())
         v_splitter.addWidget(self._build_rename_card())
@@ -250,93 +265,98 @@ class ContractRenameApp(QWidget):
     def _build_toolbar(self) -> QWidget:
         bar = QWidget()
         bar.setObjectName("toolbar")
-        bar.setFixedHeight(50)
-        bar_layout = QHBoxLayout(bar)
-        bar_layout.setContentsMargins(2, 0, 2, 0)
+        bar.setFixedHeight(74)
+        bar_layout = QVBoxLayout(bar)
+        bar_layout.setContentsMargins(0, 2, 0, 6)
         bar_layout.setSpacing(6)
 
-        # Title
-        title_box = QVBoxLayout()
-        title_box.setSpacing(1)
+        header_row = QHBoxLayout()
+        header_row.setContentsMargins(0, 0, 0, 0)
+        header_row.setSpacing(8)
         title = QLabel("采购工作台")
         title.setObjectName("toolbarTitle")
-        title_box.addWidget(title, stretch=1)
-        bar_layout.addLayout(title_box, stretch=1)
+        header_row.addWidget(title, stretch=1)
+        self.theme_btn = QPushButton("主题")
+        self.theme_btn.setObjectName("secondaryBtn")
+        self.theme_btn.setFixedHeight(30)
+        self.theme_btn.setFixedWidth(64)
+        self.theme_btn.clicked.connect(self._toggle_theme)
+        header_row.addWidget(self.theme_btn)
+        bar_layout.addLayout(header_row)
 
-        # Mode: radio group
+        control_row = QHBoxLayout()
+        control_row.setContentsMargins(0, 0, 0, 0)
+        control_row.setSpacing(8)
+
+        # Mode: segmented control
         self.dual_radio = QRadioButton("双章合同")
+        self.dual_radio.setFixedWidth(78)
         self.dual_radio.setChecked(self._mode == "dual_chop")
         self.dual_radio.toggled.connect(self._on_mode_changed)
         self.po_radio = QRadioButton("采购订单")
+        self.po_radio.setFixedWidth(78)
         self.po_radio.setChecked(self._mode == "po_order")
         self.po_radio.toggled.connect(self._on_mode_changed)
         mode_group = QHBoxLayout()
         mode_group.setSpacing(0)
         mode_group.addWidget(self.dual_radio)
         mode_group.addWidget(self.po_radio)
-        bar_layout.addLayout(mode_group)
-
-        # Separator
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.VLine)
-        sep.setStyleSheet(f"color: {_token(self._shell, 'border', '#D9D9DF')};")
-        sep.setFixedWidth(1)
-        bar_layout.addWidget(sep)
+        control_row.addLayout(mode_group)
+        control_row.addStretch()
 
         # Actions
         self.fetch_button = QPushButton("拉取邮件")
         self.fetch_button.setObjectName("secondaryBtn")
-        self.fetch_button.setFixedHeight(32)
+        self.fetch_button.setFixedHeight(30)
+        self.fetch_button.setFixedWidth(82)
         self.fetch_button.clicked.connect(self._fetch_emails)
         self.start_button = QPushButton("开始扫描")
         self.start_button.setObjectName("primaryBtn")
-        self.start_button.setFixedHeight(32)
+        self.start_button.setFixedHeight(30)
+        self.start_button.setFixedWidth(82)
         self.start_button.clicked.connect(self._start_processing)
-        bar_layout.addWidget(self.fetch_button)
-        bar_layout.addWidget(self.start_button)
+        control_row.addWidget(self.fetch_button)
+        control_row.addWidget(self.start_button)
 
         # Stop — hidden until processing
         self.stop_button = QPushButton("停止")
         self.stop_button.setObjectName("stopBtn")
-        self.stop_button.setFixedHeight(32)
+        self.stop_button.setFixedHeight(30)
+        self.stop_button.setFixedWidth(64)
         self.stop_button.setEnabled(False)
         self.stop_button.setVisible(False)
         self.stop_button.clicked.connect(self._stop_with_confirm)
-        bar_layout.addWidget(self.stop_button)
+        control_row.addWidget(self.stop_button)
 
-        self.theme_btn = QPushButton("主题")
-        self.theme_btn.setObjectName("secondaryBtn")
-        self.theme_btn.setFixedHeight(32)
-        self.theme_btn.clicked.connect(self._toggle_theme)
-        bar_layout.addWidget(self.theme_btn)
+        bar_layout.addLayout(control_row)
 
         return bar
 
     # ── Stats row ─────────────────────────────────────────────────────────
     def _build_stat_row(self) -> QWidget:
         row = QWidget()
-        row.setFixedHeight(80)
+        row.setFixedHeight(68)
         row_layout = QHBoxLayout(row)
         row_layout.setContentsMargins(0, 0, 0, 0)
         row_layout.setSpacing(6)
 
         stats = [
-            ("pending", "待处理",  "0", _token(self._shell, "text", "#F5F5F7")),
-            ("done",    "已完成",  "0", _token(self._shell, "success", "#30D158")),
-            ("failed",  "失败",    "0", _token(self._shell, "danger", "#FF453A")),
-            ("review",  "待确认",  "0", _token(self._shell, "primary", "#0A84FF")),
+            ("pending", "待处理",  "0"),
+            ("done",    "已完成",  "0"),
+            ("failed",  "失败",    "0"),
+            ("review",  "待确认",  "0"),
         ]
         self._stat_value_labels = {}
 
-        for key, label_text, val, color in stats:
+        for key, label_text, val in stats:
             card = self._card("statCard")
             cl = QVBoxLayout(card)
-            cl.setContentsMargins(12, 8, 12, 8)
+            cl.setContentsMargins(10, 6, 10, 6)
             cl.setSpacing(2)
 
             vl = QLabel(val)
             vl.setObjectName("statValue")
-            vl.setProperty("statColor", color)
+            vl.setProperty("statRole", key)
             ll = QLabel(label_text)
             ll.setObjectName("statLabel")
 
@@ -387,7 +407,7 @@ class ContractRenameApp(QWidget):
         self.preview_scroll.setWidgetResizable(True)
         self.preview_label = QLabel("选择文件以预览")
         self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        placeholder_color = _token(self._shell, "text3", "#6C6C72")
+        placeholder_color = _token(self._shell, "text3", "#5F7288")
         self.preview_label.setStyleSheet(
             f"font-size: 13px; color: {placeholder_color}; background: transparent; padding: 20px;"
         )
@@ -490,14 +510,23 @@ class ContractRenameApp(QWidget):
         title_row.addStretch()
         self._review_status_pill = QLabel("待扫描")
         self._review_status_pill.setObjectName("tagGray")
-        title_row.addWidget(self._review_status_pill)
         # Edit cache button
         cache_btn = QPushButton("编辑缓存")
         cache_btn.setObjectName("smallBtn")
+        cache_btn.setFixedWidth(76)
         cache_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         cache_btn.clicked.connect(self._open_cache_editor)
         title_row.addWidget(cache_btn)
         layout.addLayout(title_row)
+
+        status_row = QHBoxLayout()
+        status_row.setSpacing(6)
+        status_label = QLabel("当前状态")
+        status_label.setObjectName("sectionLabel")
+        status_row.addWidget(status_label)
+        status_row.addStretch()
+        status_row.addWidget(self._review_status_pill)
+        layout.addLayout(status_row)
 
         # OCR info cards
         self._ocr_vendor_value = QLabel("等待识别")
@@ -569,7 +598,7 @@ class ContractRenameApp(QWidget):
         vbox.setSpacing(2)
         lab = QLabel(title)
         lab.setObjectName("sectionLabel")
-        value_label.setStyleSheet(f"font-size: 13px; font-weight: 600; color: {_token(self._shell, 'text', '#F5F5F7')}; background: transparent;")
+        value_label.setObjectName("ocrValue")
         value_label.setWordWrap(True)
         vbox.addWidget(lab)
         vbox.addWidget(value_label)
@@ -669,7 +698,7 @@ class ContractRenameApp(QWidget):
             self.next_page_btn.setVisible(self._preview_total > 1)
         except Exception:
             self.preview_label.setText("无法加载 PDF 预览")
-            placeholder_color = _token(self._shell, "text3", "#6C6C72")
+            placeholder_color = _token(self._shell, "text3", "#5F7288")
             self.preview_label.setStyleSheet(
                 f"font-size: 13px; color: {placeholder_color}; background: transparent; padding: 40px;"
             )
@@ -699,7 +728,7 @@ class ContractRenameApp(QWidget):
             doc.close()
         except Exception:
             self.preview_label.setText("渲染失败")
-            placeholder_color = _token(self._shell, "text3", "#6C6C72")
+            placeholder_color = _token(self._shell, "text3", "#5F7288")
             self.preview_label.setStyleSheet(
                 f"font-size: 13px; color: {placeholder_color}; background: transparent; padding: 40px;"
             )
@@ -1121,7 +1150,7 @@ class ContractRenameApp(QWidget):
             self._file_paths[name] = Path(full_path)
             item = QListWidgetItem(f"{name}\n{size_str} · {self._file_times.get(name, '')}")
             item.setData(Qt.ItemDataRole.UserRole, "waiting")
-            item.setForeground(QColor(_token(self._shell, "text2", "#98989E")))
+            item.setForeground(QColor(_token(self._shell, "text2", "#40556D")))
             self.file_list.addItem(item)
             self._file_statuses[name] = "waiting"
         self._append_log(f"扫描开始 → 找到 {len(items)} 个 PDF 文件")
@@ -1136,7 +1165,7 @@ class ContractRenameApp(QWidget):
         success  = _token(self._shell, "success", "#30D158")
         warning  = _token(self._shell, "warning", "#FF9F0A")
         danger   = _token(self._shell, "danger", "#FF453A")
-        text2    = _token(self._shell, "text2", "#98989E")
+        text2    = _token(self._shell, "text2", "#40556D")
         colors = {
             "waiting": text2, "scanning": primary, "ocr": primary,
             "extracting": primary, "pending": warning, "renaming": primary,
@@ -1329,7 +1358,7 @@ class ContractRenameApp(QWidget):
         self._ocr_conf_pill.setText("-")
         self._current_pdf_path = None
         self.preview_label.setText("从左侧文件队列选择文件后显示预览")
-        placeholder_color = _token(self._shell, "text3", "#6C6C72")
+        placeholder_color = _token(self._shell, "text3", "#5F7288")
         self.preview_label.setStyleSheet(
             f"font-size: 12px; color: {placeholder_color}; background: transparent; padding: 30px;"
         )
@@ -1466,7 +1495,7 @@ class ContractRenameApp(QWidget):
                 f"font-size: 13px; font-weight: 600; color: #5090F0; background: transparent;")
         else:
             self._ocr_cache_value.setStyleSheet(
-                f"font-size: 13px; font-weight: 600; color: {_token(self._shell, 'text3', '#6C6C72')}; background: transparent;")
+                f"font-size: 13px; font-weight: 600; color: {_token(self._shell, 'text3', '#5F7288')}; background: transparent;")
         self._ocr_cache_value.setCursor(Qt.CursorShape.PointingHandCursor if ("命中" in info or "匹配" in info) else Qt.CursorShape.ArrowCursor)
 
     def _open_cache_editor(self) -> None:
@@ -1537,7 +1566,10 @@ class ThemeSettingsDialog(QDialog):
 
     def __init__(self, parent: QWidget, current_theme: dict) -> None:
         super().__init__(parent)
-        self.current_theme = dict(current_theme)
+        self.current_theme = _style.resolved_tokens(
+            current_theme.get("_mode", "dark"),
+            current_theme,
+        )
         self.setWindowTitle("界面颜色设置")
         self.setModal(True)
         self.resize(420, 520)
@@ -1596,9 +1628,7 @@ class ThemeSettingsDialog(QDialog):
         layout.addLayout(btn_row)
 
         # Inherit parent stylesheet so buttons match
-        import unified.style as _s
-        self._theme = dict(_s.TOKENS)
-        self._theme.update(self.current_theme)
+        self._theme = dict(self.current_theme)
         self.setStyleSheet(parent.styleSheet())
 
     def _update_btn_color(self, btn: QPushButton, color: str) -> None:
@@ -1615,7 +1645,9 @@ class ThemeSettingsDialog(QDialog):
             self._update_btn_color(self._btns[key], color.name())
 
     def _reset_color(self, key: str) -> None:
-        default = _style.TOKENS.get(key, "#FFFFFF")
+        default = _style.resolved_tokens(
+            self.current_theme.get("_mode", "dark"),
+        ).get(key, "#FFFFFF")
         self.current_theme[key] = default
         self._update_btn_color(self._btns[key], default)
 
@@ -1640,7 +1672,7 @@ class CacheEditDialog(QDialog):
 
         info = QLabel(f"当前缓存匹配:\n{current_text}")
         info.setWordWrap(True)
-        info.setStyleSheet("font-size: 13px; color: #98989E;")
+        info.setStyleSheet("font-size: 13px; color: #40556D;")
         layout.addWidget(info)
 
         layout.addWidget(QLabel("修正为简称（如: 林吉源）:"))
@@ -1650,7 +1682,7 @@ class CacheEditDialog(QDialog):
 
         hint = QLabel("此操作会更新 vendor_cache.json 中对应条目的简称和别名。")
         hint.setWordWrap(True)
-        hint.setStyleSheet("font-size: 11px; color: #6C6C72;")
+        hint.setStyleSheet("font-size: 11px; color: #5F7288;")
         layout.addWidget(hint)
 
         btn_row = QHBoxLayout()
@@ -1687,7 +1719,7 @@ class VendorCacheManagerDialog(QDialog):
         layout.setSpacing(10)
 
         header = QLabel("双击单元格编辑简称和全称，右键删除条目。修改后点保存。")
-        header.setStyleSheet("font-size: 12px; color: #98989E;")
+        header.setStyleSheet("font-size: 12px; color: #40556D;")
         layout.addWidget(header)
 
         self.table = QTableWidget()
