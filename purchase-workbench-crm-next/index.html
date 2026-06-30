@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>采购工作台 CRM Next</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260630-indexeddb2" />
   </head>
   <body>
     <svg class="svg-sprite" aria-hidden="true">
@@ -55,19 +55,10 @@
         <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
         <path d="M13.7 21a2 2 0 0 1-3.4 0"></path>
       </symbol>
-      <symbol id="icon-upload" viewBox="0 0 24 24">
-        <path d="M12 15V3"></path>
-        <path d="m7 8 5-5 5 5"></path>
-        <path d="M5 21h14a2 2 0 0 0 2-2v-3"></path>
-        <path d="M3 16v3a2 2 0 0 0 2 2"></path>
-      </symbol>
       <symbol id="icon-filter" viewBox="0 0 24 24">
         <path d="M3 5h18"></path>
         <path d="M6 12h12"></path>
         <path d="M10 19h4"></path>
-      </symbol>
-      <symbol id="icon-check" viewBox="0 0 24 24">
-        <path d="m20 6-11 11-5-5"></path>
       </symbol>
       <symbol id="icon-chevron" viewBox="0 0 24 24">
         <path d="m9 18 6-6-6-6"></path>
@@ -76,13 +67,17 @@
         <path d="M12 5v14"></path>
         <path d="M5 12h14"></path>
       </symbol>
-      <symbol id="icon-clock" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="9"></circle>
-        <path d="M12 7v5l3 2"></path>
+      <symbol id="icon-trash" viewBox="0 0 24 24">
+        <path d="M3 6h18"></path>
+        <path d="M8 6V4h8v2"></path>
+        <path d="M19 6l-1 15H6L5 6"></path>
+        <path d="M10 11v6"></path>
+        <path d="M14 11v6"></path>
       </symbol>
-      <symbol id="icon-link" viewBox="0 0 24 24">
-        <path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"></path>
-        <path d="M14 11a5 5 0 0 0-7.1 0l-2 2a5 5 0 0 0 7.1 7.1l1.1-1.1"></path>
+      <symbol id="icon-save" viewBox="0 0 24 24">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"></path>
+        <path d="M17 21v-8H7v8"></path>
+        <path d="M7 3v5h8"></path>
       </symbol>
     </svg>
 
@@ -101,41 +96,33 @@
             <svg><use href="#icon-layout"></use></svg>
             <span>工作台</span>
           </button>
-          <button class="nav-item" data-view="orders" title="采购订单">
+          <button class="nav-item" data-view="tasks" title="任务管理">
             <svg><use href="#icon-file"></use></svg>
-            <span>采购订单</span>
+            <span>任务管理</span>
           </button>
-          <button class="nav-item" data-view="contracts" title="合同中心">
-            <svg><use href="#icon-link"></use></svg>
-            <span>合同中心</span>
-          </button>
-          <button class="nav-item" data-view="suppliers" title="供应商">
+          <button class="nav-item" data-view="categories" title="板块看板">
             <svg><use href="#icon-building"></use></svg>
-            <span>供应商</span>
+            <span>板块看板</span>
           </button>
-          <button class="nav-item" data-view="messages" title="群聊发送">
-            <svg><use href="#icon-send"></use></svg>
-            <span>群聊发送</span>
-          </button>
-          <button class="nav-item" data-view="watermark" title="水单识别">
-            <svg><use href="#icon-droplet"></use></svg>
-            <span>水单识别</span>
-          </button>
-          <button class="nav-item" data-view="reports" title="数据报表">
+          <button class="nav-item" data-view="report" title="月度复盘">
             <svg><use href="#icon-chart"></use></svg>
-            <span>数据报表</span>
+            <span>月度复盘</span>
           </button>
-          <button class="nav-item" data-view="settings" title="系统设置">
+          <button class="nav-item" data-view="automation" title="自动记录">
+            <svg><use href="#icon-send"></use></svg>
+            <span>自动记录</span>
+          </button>
+          <button class="nav-item" data-view="settings" title="本地设置">
             <svg><use href="#icon-settings"></use></svg>
-            <span>系统设置</span>
+            <span>本地设置</span>
           </button>
         </nav>
 
         <div class="sidebar-footer">
           <div class="sync-dot"></div>
           <div>
-            <strong>本地演示数据</strong>
-            <span>等待接入 Python 服务</span>
+            <strong>IndexedDB 本地库</strong>
+            <span>断网可新增、编辑、删除和生成报告</span>
           </div>
         </div>
       </aside>
@@ -143,18 +130,18 @@
       <section class="main-area">
         <header class="topbar">
           <div class="module-heading">
-            <p id="moduleEyebrow">采购运营</p>
-            <h1 id="moduleTitle">工作台总览</h1>
+            <p id="moduleEyebrow">本地采购任务</p>
+            <h1 id="moduleTitle">任务工作台</h1>
           </div>
 
           <div class="top-actions">
             <label class="search-box" for="globalSearch">
               <svg><use href="#icon-search"></use></svg>
-              <input id="globalSearch" type="search" placeholder="搜索订单、供应商、合同编号" autocomplete="off" />
+              <input id="globalSearch" type="search" placeholder="搜索任务名称、板块分类" autocomplete="off" />
             </label>
-            <button class="icon-button" id="notifyButton" title="通知">
+            <button class="icon-button" id="notifyButton" type="button" title="本地状态" aria-label="本地状态">
               <svg><use href="#icon-bell"></use></svg>
-              <span class="badge">3</span>
+              <span class="badge" id="problemBadge">0</span>
             </button>
             <div class="user-chip">
               <span>采购主管</span>
@@ -164,66 +151,54 @@
         </header>
 
         <div class="module-tabs" role="tablist" aria-label="业务视图">
-          <button class="tab-button is-active" data-view="dashboard">总览</button>
-          <button class="tab-button" data-view="orders">订单</button>
-          <button class="tab-button" data-view="contracts">合同</button>
-          <button class="tab-button" data-view="suppliers">供应商</button>
-          <button class="tab-button" data-view="messages">发送</button>
-          <button class="tab-button" data-view="watermark">水单</button>
+          <button class="tab-button is-active" data-view="dashboard" type="button">总览</button>
+          <button class="tab-button" data-view="tasks" type="button">任务</button>
+          <button class="tab-button" data-view="categories" type="button">板块</button>
+          <button class="tab-button" data-view="report" type="button">复盘</button>
         </div>
 
         <main class="content">
           <section class="metrics-strip" aria-label="关键指标">
             <article class="metric-card">
-              <span>今日待处理</span>
-              <strong id="metricPending">18</strong>
-              <small class="trend trend-up">+4 较昨日</small>
+              <span>总任务</span>
+              <strong id="metricTotal">0</strong>
+              <small>数据库全部记录</small>
             </article>
             <article class="metric-card">
-              <span>合同待归档</span>
-              <strong id="metricContracts">7</strong>
-              <small>2 个临近超时</small>
+              <span>待处理</span>
+              <strong id="metricPending">0</strong>
+              <small>未完成任务</small>
             </article>
             <article class="metric-card">
-              <span>供应商响应率</span>
-              <strong id="metricRate">92%</strong>
-              <small class="trend trend-flat">稳定</small>
+              <span>有问题</span>
+              <strong id="metricProblem">0</strong>
+              <small class="trend-down">卡点任务</small>
             </article>
             <article class="metric-card">
-              <span>本周采购额</span>
-              <strong id="metricAmount">¥48.6万</strong>
-              <small class="trend trend-down">-6.2%</small>
+              <span>平均完成率</span>
+              <strong id="metricAverage">0%</strong>
+              <small class="trend-flat">按当前进度计算</small>
             </article>
           </section>
 
           <section class="work-grid">
             <div class="primary-column">
-              <section class="panel upload-panel">
-                <div>
-                  <span class="section-label">快速入口</span>
-                  <h2 id="quickTitle">采购文件处理</h2>
-                </div>
-                <div class="upload-zone" id="uploadZone" tabindex="0">
-                  <input id="fileInput" type="file" multiple />
-                  <svg><use href="#icon-upload"></use></svg>
-                  <div>
-                    <strong>拖入 PDF / Excel / 图片</strong>
-                    <span>自动进入订单、合同、水单识别队列</span>
-                  </div>
-                  <button class="secondary-button" id="pickFileButton">选择文件</button>
-                </div>
-              </section>
-
               <section class="panel">
                 <div class="panel-heading">
                   <div>
-                    <span class="section-label">流程看板</span>
-                    <h2 id="flowTitle">采购处理链路</h2>
+                    <span class="section-label">动态看板</span>
+                    <h2 id="flowTitle">按板块自动分列</h2>
                   </div>
-                  <button class="secondary-button" id="addTaskButton">
-                    <svg><use href="#icon-plus"></use></svg>
-                    新建任务
-                  </button>
+                  <div class="button-group">
+                    <button class="secondary-button" id="generateReportButton" type="button">
+                      <svg><use href="#icon-chart"></use></svg>
+                      生成本月报告
+                    </button>
+                    <button class="primary-button" id="addTaskButton" type="button">
+                      <svg><use href="#icon-plus"></use></svg>
+                      新建任务
+                    </button>
+                  </div>
                 </div>
                 <div class="workflow-board" id="workflowBoard"></div>
               </section>
@@ -231,17 +206,17 @@
               <section class="panel">
                 <div class="panel-heading compact">
                   <div>
-                    <span class="section-label">业务列表</span>
-                    <h2 id="tableTitle">待处理采购单</h2>
+                    <span class="section-label">任务列表</span>
+                    <h2 id="tableTitle">数据库任务</h2>
                   </div>
                   <div class="table-tools">
-                    <div class="segmented" aria-label="订单状态筛选">
-                      <button class="is-active" data-filter="all">全部</button>
-                      <button data-filter="urgent">加急</button>
-                      <button data-filter="pending">待确认</button>
-                      <button data-filter="done">已完成</button>
+                    <div class="segmented" aria-label="任务筛选">
+                      <button class="is-active" data-filter="all" type="button">全部</button>
+                      <button data-filter="urgent" type="button">加急</button>
+                      <button data-filter="pending" type="button">待确认</button>
+                      <button data-filter="done" type="button">已完成</button>
                     </div>
-                    <button class="icon-button" id="filterButton" title="筛选">
+                    <button class="icon-button" id="filterButton" type="button" title="筛选说明" aria-label="筛选说明">
                       <svg><use href="#icon-filter"></use></svg>
                     </button>
                   </div>
@@ -250,14 +225,14 @@
                   <table>
                     <thead>
                       <tr>
-                        <th><input type="checkbox" id="selectAll" aria-label="选择全部" /></th>
-                        <th>编号</th>
-                        <th>供应商</th>
-                        <th>品类</th>
-                        <th>金额</th>
+                        <th>任务名称</th>
+                        <th>板块</th>
+                        <th>优先级</th>
                         <th>状态</th>
-                        <th>负责人</th>
-                        <th>更新时间</th>
+                        <th>完成度</th>
+                        <th>问题</th>
+                        <th>更新日期</th>
+                        <th>操作</th>
                       </tr>
                     </thead>
                     <tbody id="orderTableBody"></tbody>
@@ -270,43 +245,44 @@
               <section class="panel inspector">
                 <div class="panel-heading compact">
                   <div>
-                    <span class="section-label">详情</span>
-                    <h2 id="detailTitle">PO-240630-018</h2>
+                    <span class="section-label">任务详情</span>
+                    <h2 id="detailTitle">暂无任务</h2>
                   </div>
-                  <button class="icon-button" id="openDetailButton" title="打开详情">
+                  <button class="icon-button" id="openDetailButton" type="button" title="编辑当前任务" aria-label="编辑当前任务">
                     <svg><use href="#icon-chevron"></use></svg>
                   </button>
                 </div>
                 <div class="detail-block">
                   <span>当前状态</span>
-                  <strong id="detailStatus">待供应商确认</strong>
+                  <strong id="detailStatus">暂无</strong>
                 </div>
                 <div class="detail-grid">
                   <div>
-                    <span>供应商</span>
-                    <strong id="detailSupplier">杭州辰光包装</strong>
+                    <span>板块</span>
+                    <strong id="detailCategory">-</strong>
                   </div>
                   <div>
-                    <span>金额</span>
-                    <strong id="detailAmount">¥86,400</strong>
+                    <span>优先级</span>
+                    <strong id="detailPriority">-</strong>
                   </div>
                   <div>
-                    <span>负责人</span>
-                    <strong id="detailOwner">李鹏</strong>
+                    <span>完成度</span>
+                    <strong id="detailProgress">0%</strong>
                   </div>
                   <div>
-                    <span>时效</span>
-                    <strong id="detailSla">3h 20m</strong>
+                    <span>更新时间</span>
+                    <strong id="detailUpdateDate">-</strong>
                   </div>
                 </div>
+                <div class="problem-box" id="detailProblem">无问题描述</div>
                 <div class="timeline" id="timeline"></div>
               </section>
 
               <section class="panel">
                 <div class="panel-heading compact">
                   <div>
-                    <span class="section-label">供应商健康度</span>
-                    <h2>风险雷达</h2>
+                    <span class="section-label">板块完成率</span>
+                    <h2>Top 板块</h2>
                   </div>
                 </div>
                 <div class="supplier-list" id="supplierList"></div>
@@ -315,24 +291,11 @@
               <section class="panel">
                 <div class="panel-heading compact">
                   <div>
-                    <span class="section-label">执行节奏</span>
-                    <h2>本周达成</h2>
+                    <span class="section-label">本地数据状态</span>
+                    <h2>自动记录</h2>
                   </div>
                 </div>
-                <div class="progress-list">
-                  <div class="progress-row">
-                    <div><span>订单确认</span><strong>76%</strong></div>
-                    <div class="progress"><i style="width: 76%"></i></div>
-                  </div>
-                  <div class="progress-row">
-                    <div><span>合同归档</span><strong>58%</strong></div>
-                    <div class="progress"><i style="width: 58%"></i></div>
-                  </div>
-                  <div class="progress-row">
-                    <div><span>群聊触达</span><strong>91%</strong></div>
-                    <div class="progress"><i style="width: 91%"></i></div>
-                  </div>
-                </div>
+                <div class="progress-list" id="storageSummary"></div>
               </section>
             </aside>
           </section>
@@ -340,7 +303,93 @@
       </section>
     </div>
 
+    <div class="modal-backdrop" id="taskModal" aria-hidden="true">
+      <section class="task-modal" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+        <form id="taskForm">
+          <input type="hidden" id="taskId" />
+          <div class="modal-header">
+            <div>
+              <span class="section-label">任务维护</span>
+              <h2 id="taskModalTitle">新建任务</h2>
+            </div>
+            <button class="icon-button" id="closeModalButton" type="button" title="关闭" aria-label="关闭">×</button>
+          </div>
+
+          <div class="form-grid">
+            <label class="form-field form-field-wide">
+              <span>任务名称</span>
+              <input id="taskName" name="taskName" required maxlength="80" autocomplete="off" />
+            </label>
+            <label class="form-field">
+              <span>板块分类</span>
+              <input id="category" name="category" required maxlength="40" list="categoryOptions" autocomplete="off" />
+              <datalist id="categoryOptions"></datalist>
+            </label>
+            <label class="form-field">
+              <span>优先级</span>
+              <select id="priority" name="priority" required>
+                <option value="紧急">紧急</option>
+                <option value="高">高</option>
+                <option value="中">中</option>
+                <option value="低">低</option>
+              </select>
+            </label>
+            <label class="form-field">
+              <span>状态</span>
+              <select id="status" name="status" required>
+                <option value="待启动">待启动</option>
+                <option value="进行中">进行中</option>
+                <option value="已搁置">已搁置</option>
+                <option value="已完成">已完成</option>
+              </select>
+            </label>
+            <label class="form-field">
+              <span>完成度 <strong id="progressValue">0%</strong></span>
+              <input id="progress" name="progress" type="range" min="0" max="100" step="1" value="0" />
+            </label>
+            <label class="check-field">
+              <input id="isProblem" name="isProblem" type="checkbox" />
+              <span>标记为有问题/卡点</span>
+            </label>
+            <label class="form-field form-field-wide">
+              <span>问题描述</span>
+              <textarea id="problemDesc" name="problemDesc" rows="4" maxlength="240" placeholder="当任务存在卡点时填写"></textarea>
+            </label>
+          </div>
+
+          <p class="form-error" id="formError" role="alert"></p>
+
+          <div class="modal-actions">
+            <button class="secondary-button" id="cancelModalButton" type="button">取消</button>
+            <button class="primary-button" type="submit">
+              <svg><use href="#icon-save"></use></svg>
+              保存任务
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="confirmModal" aria-hidden="true">
+      <section class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <div class="modal-header">
+          <div>
+            <span class="section-label">危险操作</span>
+            <h2 id="confirmTitle">确认删除</h2>
+          </div>
+        </div>
+        <p id="confirmMessage">确认删除这条任务？</p>
+        <div class="modal-actions">
+          <button class="secondary-button" id="confirmCancelButton" type="button">取消</button>
+          <button class="danger-button" id="confirmOkButton" type="button">
+            <svg><use href="#icon-trash"></use></svg>
+            确认删除
+          </button>
+        </div>
+      </section>
+    </div>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="./app.js" defer></script>
+    <script src="./app.js?v=20260630-indexeddb2" defer></script>
   </body>
 </html>
