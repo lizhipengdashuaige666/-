@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>采购工作台 CRM Next</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <svg class="svg-sprite" aria-hidden="true">
+      <symbol id="icon-layout" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+        <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+        <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+      </symbol>
+      <symbol id="icon-file" viewBox="0 0 24 24">
+        <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"></path>
+        <path d="M14 2v5h5"></path>
+        <path d="M9 13h6"></path>
+        <path d="M9 17h4"></path>
+      </symbol>
+      <symbol id="icon-building" viewBox="0 0 24 24">
+        <path d="M3 21h18"></path>
+        <path d="M5 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"></path>
+        <path d="M9 7h1"></path>
+        <path d="M14 7h1"></path>
+        <path d="M9 11h1"></path>
+        <path d="M14 11h1"></path>
+        <path d="M9 15h1"></path>
+        <path d="M14 15h1"></path>
+      </symbol>
+      <symbol id="icon-send" viewBox="0 0 24 24">
+        <path d="m22 2-7 20-4-9-9-4Z"></path>
+        <path d="M22 2 11 13"></path>
+      </symbol>
+      <symbol id="icon-droplet" viewBox="0 0 24 24">
+        <path d="M12 2.5S5 10 5 15a7 7 0 0 0 14 0c0-5-7-12.5-7-12.5Z"></path>
+      </symbol>
+      <symbol id="icon-chart" viewBox="0 0 24 24">
+        <path d="M3 3v18h18"></path>
+        <path d="M7 16v-5"></path>
+        <path d="M12 16V7"></path>
+        <path d="M17 16v-8"></path>
+      </symbol>
+      <symbol id="icon-settings" viewBox="0 0 24 24">
+        <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"></path>
+        <path d="M19.4 15a1.8 1.8 0 0 0 .4 2l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.8 1.8 0 0 0-2-.4 1.8 1.8 0 0 0-1 1.6V21a2 2 0 0 1-4 0v-.1a1.8 1.8 0 0 0-1-1.6 1.8 1.8 0 0 0-2 .4l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.8 1.8 0 0 0 .4-2 1.8 1.8 0 0 0-1.6-1H3a2 2 0 0 1 0-4h.1a1.8 1.8 0 0 0 1.6-1 1.8 1.8 0 0 0-.4-2l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.8 1.8 0 0 0 2 .4 1.8 1.8 0 0 0 1-1.6V3a2 2 0 0 1 4 0v.1a1.8 1.8 0 0 0 1 1.6 1.8 1.8 0 0 0 2-.4l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.8 1.8 0 0 0-.4 2 1.8 1.8 0 0 0 1.6 1H21a2 2 0 0 1 0 4h-.1a1.8 1.8 0 0 0-1.5 1Z"></path>
+      </symbol>
+      <symbol id="icon-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="m20 20-3.5-3.5"></path>
+      </symbol>
+      <symbol id="icon-bell" viewBox="0 0 24 24">
+        <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+        <path d="M13.7 21a2 2 0 0 1-3.4 0"></path>
+      </symbol>
+      <symbol id="icon-upload" viewBox="0 0 24 24">
+        <path d="M12 15V3"></path>
+        <path d="m7 8 5-5 5 5"></path>
+        <path d="M5 21h14a2 2 0 0 0 2-2v-3"></path>
+        <path d="M3 16v3a2 2 0 0 0 2 2"></path>
+      </symbol>
+      <symbol id="icon-filter" viewBox="0 0 24 24">
+        <path d="M3 5h18"></path>
+        <path d="M6 12h12"></path>
+        <path d="M10 19h4"></path>
+      </symbol>
+      <symbol id="icon-check" viewBox="0 0 24 24">
+        <path d="m20 6-11 11-5-5"></path>
+      </symbol>
+      <symbol id="icon-chevron" viewBox="0 0 24 24">
+        <path d="m9 18 6-6-6-6"></path>
+      </symbol>
+      <symbol id="icon-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14"></path>
+        <path d="M5 12h14"></path>
+      </symbol>
+      <symbol id="icon-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M12 7v5l3 2"></path>
+      </symbol>
+      <symbol id="icon-link" viewBox="0 0 24 24">
+        <path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"></path>
+        <path d="M14 11a5 5 0 0 0-7.1 0l-2 2a5 5 0 0 0 7.1 7.1l1.1-1.1"></path>
+      </symbol>
+    </svg>
+
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="brand">
+          <div class="brand-mark">采</div>
+          <div>
+            <strong>采购工作台</strong>
+            <span>CRM Next</span>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <button class="nav-item is-active" data-view="dashboard" title="工作台">
+            <svg><use href="#icon-layout"></use></svg>
+            <span>工作台</span>
+          </button>
+          <button class="nav-item" data-view="orders" title="采购订单">
+            <svg><use href="#icon-file"></use></svg>
+            <span>采购订单</span>
+          </button>
+          <button class="nav-item" data-view="contracts" title="合同中心">
+            <svg><use href="#icon-link"></use></svg>
+            <span>合同中心</span>
+          </button>
+          <button class="nav-item" data-view="suppliers" title="供应商">
+            <svg><use href="#icon-building"></use></svg>
+            <span>供应商</span>
+          </button>
+          <button class="nav-item" data-view="messages" title="群聊发送">
+            <svg><use href="#icon-send"></use></svg>
+            <span>群聊发送</span>
+          </button>
+          <button class="nav-item" data-view="watermark" title="水单识别">
+            <svg><use href="#icon-droplet"></use></svg>
+            <span>水单识别</span>
+          </button>
+          <button class="nav-item" data-view="reports" title="数据报表">
+            <svg><use href="#icon-chart"></use></svg>
+            <span>数据报表</span>
+          </button>
+          <button class="nav-item" data-view="settings" title="系统设置">
+            <svg><use href="#icon-settings"></use></svg>
+            <span>系统设置</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="sync-dot"></div>
+          <div>
+            <strong>本地演示数据</strong>
+            <span>等待接入 Python 服务</span>
+          </div>
+        </div>
+      </aside>
+
+      <section class="main-area">
+        <header class="topbar">
+          <div class="module-heading">
+            <p id="moduleEyebrow">采购运营</p>
+            <h1 id="moduleTitle">工作台总览</h1>
+          </div>
+
+          <div class="top-actions">
+            <label class="search-box" for="globalSearch">
+              <svg><use href="#icon-search"></use></svg>
+              <input id="globalSearch" type="search" placeholder="搜索订单、供应商、合同编号" autocomplete="off" />
+            </label>
+            <button class="icon-button" id="notifyButton" title="通知">
+              <svg><use href="#icon-bell"></use></svg>
+              <span class="badge">3</span>
+            </button>
+            <div class="user-chip">
+              <span>采购主管</span>
+              <strong>LP</strong>
+            </div>
+          </div>
+        </header>
+
+        <div class="module-tabs" role="tablist" aria-label="业务视图">
+          <button class="tab-button is-active" data-view="dashboard">总览</button>
+          <button class="tab-button" data-view="orders">订单</button>
+          <button class="tab-button" data-view="contracts">合同</button>
+          <button class="tab-button" data-view="suppliers">供应商</button>
+          <button class="tab-button" data-view="messages">发送</button>
+          <button class="tab-button" data-view="watermark">水单</button>
+        </div>
+
+        <main class="content">
+          <section class="metrics-strip" aria-label="关键指标">
+            <article class="metric-card">
+              <span>今日待处理</span>
+              <strong id="metricPending">18</strong>
+              <small class="trend trend-up">+4 较昨日</small>
+            </article>
+            <article class="metric-card">
+              <span>合同待归档</span>
+              <strong id="metricContracts">7</strong>
+              <small>2 个临近超时</small>
+            </article>
+            <article class="metric-card">
+              <span>供应商响应率</span>
+              <strong id="metricRate">92%</strong>
+              <small class="trend trend-flat">稳定</small>
+            </article>
+            <article class="metric-card">
+              <span>本周采购额</span>
+              <strong id="metricAmount">¥48.6万</strong>
+              <small class="trend trend-down">-6.2%</small>
+            </article>
+          </section>
+
+          <section class="work-grid">
+            <div class="primary-column">
+              <section class="panel upload-panel">
+                <div>
+                  <span class="section-label">快速入口</span>
+                  <h2 id="quickTitle">采购文件处理</h2>
+                </div>
+                <div class="upload-zone" id="uploadZone" tabindex="0">
+                  <input id="fileInput" type="file" multiple />
+                  <svg><use href="#icon-upload"></use></svg>
+                  <div>
+                    <strong>拖入 PDF / Excel / 图片</strong>
+                    <span>自动进入订单、合同、水单识别队列</span>
+                  </div>
+                  <button class="secondary-button" id="pickFileButton">选择文件</button>
+                </div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-heading">
+                  <div>
+                    <span class="section-label">流程看板</span>
+                    <h2 id="flowTitle">采购处理链路</h2>
+                  </div>
+                  <button class="secondary-button" id="addTaskButton">
+                    <svg><use href="#icon-plus"></use></svg>
+                    新建任务
+                  </button>
+                </div>
+                <div class="workflow-board" id="workflowBoard"></div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-heading compact">
+                  <div>
+                    <span class="section-label">业务列表</span>
+                    <h2 id="tableTitle">待处理采购单</h2>
+                  </div>
+                  <div class="table-tools">
+                    <div class="segmented" aria-label="订单状态筛选">
+                      <button class="is-active" data-filter="all">全部</button>
+                      <button data-filter="urgent">加急</button>
+                      <button data-filter="pending">待确认</button>
+                      <button data-filter="done">已完成</button>
+                    </div>
+                    <button class="icon-button" id="filterButton" title="筛选">
+                      <svg><use href="#icon-filter"></use></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th><input type="checkbox" id="selectAll" aria-label="选择全部" /></th>
+                        <th>编号</th>
+                        <th>供应商</th>
+                        <th>品类</th>
+                        <th>金额</th>
+                        <th>状态</th>
+                        <th>负责人</th>
+                        <th>更新时间</th>
+                      </tr>
+                    </thead>
+                    <tbody id="orderTableBody"></tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+
+            <aside class="right-column">
+              <section class="panel inspector">
+                <div class="panel-heading compact">
+                  <div>
+                    <span class="section-label">详情</span>
+                    <h2 id="detailTitle">PO-240630-018</h2>
+                  </div>
+                  <button class="icon-button" id="openDetailButton" title="打开详情">
+                    <svg><use href="#icon-chevron"></use></svg>
+                  </button>
+                </div>
+                <div class="detail-block">
+                  <span>当前状态</span>
+                  <strong id="detailStatus">待供应商确认</strong>
+                </div>
+                <div class="detail-grid">
+                  <div>
+                    <span>供应商</span>
+                    <strong id="detailSupplier">杭州辰光包装</strong>
+                  </div>
+                  <div>
+                    <span>金额</span>
+                    <strong id="detailAmount">¥86,400</strong>
+                  </div>
+                  <div>
+                    <span>负责人</span>
+                    <strong id="detailOwner">李鹏</strong>
+                  </div>
+                  <div>
+                    <span>时效</span>
+                    <strong id="detailSla">3h 20m</strong>
+                  </div>
+                </div>
+                <div class="timeline" id="timeline"></div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-heading compact">
+                  <div>
+                    <span class="section-label">供应商健康度</span>
+                    <h2>风险雷达</h2>
+                  </div>
+                </div>
+                <div class="supplier-list" id="supplierList"></div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-heading compact">
+                  <div>
+                    <span class="section-label">执行节奏</span>
+                    <h2>本周达成</h2>
+                  </div>
+                </div>
+                <div class="progress-list">
+                  <div class="progress-row">
+                    <div><span>订单确认</span><strong>76%</strong></div>
+                    <div class="progress"><i style="width: 76%"></i></div>
+                  </div>
+                  <div class="progress-row">
+                    <div><span>合同归档</span><strong>58%</strong></div>
+                    <div class="progress"><i style="width: 58%"></i></div>
+                  </div>
+                  <div class="progress-row">
+                    <div><span>群聊触达</span><strong>91%</strong></div>
+                    <div class="progress"><i style="width: 91%"></i></div>
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </section>
+        </main>
+      </section>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js" defer></script>
+  </body>
+</html>
