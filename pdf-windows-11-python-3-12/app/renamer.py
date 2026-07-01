@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import shutil
 import re
+from datetime import date
 from pathlib import Path
 
 
@@ -20,6 +21,22 @@ class FileRenamer:
         re.IGNORECASE,
     )
 
+    # Mode C: 对账单 —— {vendor_short}{naming_date}对账单.pdf
+    RECONCILIATION_NAMED_PATTERNS = [
+        re.compile(
+            r'^([^\\/:*?"<>|]+?)(\d{8}|\d{4}[-_/年.]?\d{1,2}|\d{1,2}月|[一二三四五六七八九十]{1,3}月)对账单(?:\(\d+\))?\.pdf$',
+            re.IGNORECASE,
+        ),
+        re.compile(
+            r'^([^\\/:*?"<>|]+?)对账单(.+?)(?:\(\d+\))?\.pdf$',
+            re.IGNORECASE,
+        ),
+        re.compile(
+            r'^([^\\/:*?"<>|]+?)(\d{8}|\d{4}[-_/年.]?\d{1,2}|\d{1,2}月|[一二三四五六七八九十]{1,3}月)供应商往来对账单(?:\(\d+\))?\.pdf$',
+            re.IGNORECASE,
+        ),
+    ]
+
     LEGACY_NAMED_PATTERNS = [
         re.compile(
             r'^(.+?)_?([A-Za-z]{1,8}\d[\w.\-]*)_双章合同(?:\(\d+\))?\.pdf$',
@@ -36,7 +53,12 @@ class FileRenamer:
         return sorted(path for path in directory.glob(pattern) if path.is_file())
 
     def parse_named_filename(self, file_name: str) -> tuple[str, str] | None:
-        for pattern in [self.CURRENT_NAMED_PATTERN, self.PO_NAMED_PATTERN, *self.LEGACY_NAMED_PATTERNS]:
+        for pattern in [
+            self.CURRENT_NAMED_PATTERN,
+            *self.RECONCILIATION_NAMED_PATTERNS,
+            self.PO_NAMED_PATTERN,
+            *self.LEGACY_NAMED_PATTERNS,
+        ]:
             match = pattern.match(file_name)
             if match:
                 return match.group(1), match.group(2).upper()
@@ -47,6 +69,16 @@ class FileRenamer:
 
     def is_po_named(self, file_name: str) -> bool:
         return bool(self.PO_NAMED_PATTERN.match(file_name))
+
+    def is_reconciliation_named(self, file_name: str) -> bool:
+        return any(pattern.match(file_name) for pattern in self.RECONCILIATION_NAMED_PATTERNS)
+
+    def is_named_for_mode(self, file_name: str, naming_mode: str) -> bool:
+        if naming_mode == "reconciliation":
+            return self.is_reconciliation_named(file_name)
+        if naming_mode == "po_order":
+            return self.is_po_named(file_name)
+        return self.is_already_named(file_name)
 
     def is_legacy_named(self, file_name: str) -> bool:
         return any(pattern.match(file_name) for pattern in self.LEGACY_NAMED_PATTERNS)
@@ -68,6 +100,7 @@ class FileRenamer:
         naming_mode:
           "dual_chop" → 里博双章合同PO20260527007.pdf
           "po_order"  → 里博PO20260527007.pdf
+          "reconciliation" → 里博20260630对账单.pdf
         """
         vendor = self.sanitize_part(vendor_short_name)
         contract = self.sanitize_part(contract_no)
@@ -75,8 +108,32 @@ class FileRenamer:
 
         if naming_mode == "po_order":
             return f"{vendor}{contract}{final_suffix.lower()}"
+        if naming_mode == "reconciliation":
+            return f"{vendor}{contract}对账单{final_suffix.lower()}"
         # 默认 dual_chop
         return f"{vendor}双章合同{contract}{final_suffix.lower()}"
+
+    def current_reconciliation_number(self) -> str:
+        return date.today().strftime("%Y%m%d")
+
+    def extract_reconciliation_period(self, text: str) -> str | None:
+        patterns = [
+            re.compile(r"(\d{4})[-_/年.]?(\d{1,2})\s*(?:月|月份)?"),
+            re.compile(r"(\d{1,2})\s*月"),
+            re.compile(r"([一二三四五六七八九十]{1,3})\s*月"),
+        ]
+        for pattern in patterns:
+            match = pattern.search(text or "")
+            if not match:
+                continue
+            if len(match.groups()) == 2:
+                year, month = match.groups()
+                return f"{year}{int(month):02d}"
+            value = match.group(1)
+            if value.isdigit():
+                return f"{int(value)}月"
+            return f"{value}月"
+        return None
 
     def sanitize_part(self, value: str) -> str:
         sanitized = self.ILLEGAL_CHAR_PATTERN.sub("_", value.strip())

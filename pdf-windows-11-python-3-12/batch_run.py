@@ -139,7 +139,7 @@ def main() -> None:
 
     for pdf_path in pdf_files:
         try:
-            if renamer.is_already_named(pdf_path.name):
+            if renamer.is_named_for_mode(pdf_path.name, naming_mode):
                 parsed = renamer.parse_named_filename(pdf_path.name)
                 if parsed:
                     vendor_cache.remember(parsed[0], extractor.abbreviate_company_name(parsed[0]))
@@ -193,8 +193,12 @@ def main() -> None:
                     ocr_service = PaddleOCRService(lang=config.ocr_lang)
                 image = pdf_service.render_first_page(pdf_path)
                 ocr_result = ocr_service.recognize(image)
-                ocr_cache.remember(pdf_path, ocr_result)
+            ocr_cache.remember(pdf_path, ocr_result)
             extraction = extractor.extract(ocr_result)
+            if naming_mode == "reconciliation":
+                extraction.contract_no = renamer.current_reconciliation_number()
+                if extraction.vendor_short_name:
+                    extraction.reason = None
 
             # 精确匹配
             cache_match = vendor_cache.match_text(ocr_result.full_text)

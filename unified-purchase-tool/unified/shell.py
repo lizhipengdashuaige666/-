@@ -3,10 +3,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QEasingCurve, QPropertyAnimation
 from PySide6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
-    QMessageBox, QPushButton,
+    QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel, QLineEdit,
+    QMainWindow, QMessageBox, QPushButton,
     QStackedWidget, QVBoxLayout, QWidget,
 )
 
@@ -22,7 +22,13 @@ _NAV_ITEMS = [
     ("合同命名", "PDF 合同自动识别与重命名"),
     ("合同发送台", "合同与对账单发送到供应商群聊"),
     ("水单识别", "银行付款水单自动识别与记账"),
+    ("付款跟踪", "付款申请单跟踪、状态管理与导出"),
 ]
+
+
+def _nav_display_name(full: str) -> str:
+    """Return the readable module label shown in the topbar."""
+    return full.split("  ", 1)[-1] if "  " in full else full
 
 
 class UnifiedApp(QMainWindow):
@@ -34,13 +40,14 @@ class UnifiedApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("采购工作台")
-        self.resize(1200, 720)
-        self.setMinimumSize(980, 600)
+        self.resize(1360, 780)
+        self.setMinimumSize(1240, 700)
         self.setAcceptDrops(True)
 
         self._theme_overrides = style.load_theme()
-        # index 0 = 合同命名 (lazy), 1 = 合同发送台 (lazy), 2 = 水单识别 (direct)
-        self._lazy_loaded: dict[int, bool] = {0: False, 1: False, 2: True}
+        # index 0 = 合同命名 (lazy), 1 = 合同发送台 (lazy), 2 = 水单识别 (direct), 3 = 付款跟踪 (lazy)
+        self._lazy_loaded: dict[int, bool] = {0: False, 1: False, 2: True, 3: False}
+        self._page_transition_anim: QPropertyAnimation | None = None
 
         # ── 页面 ──
         self.stack = QStackedWidget()
@@ -51,14 +58,17 @@ class UnifiedApp(QMainWindow):
         # index 2 — 水单识别（直接加载）
         self.watermark_page = WatermarkApp(parent=self, shell=self)
 
-        # index 0, 1 — 占位（延迟加载）
+        # index 0, 1, 3 — 占位（延迟加载）
         self.rename_page = None
         self.workbench_page = None
+        self.payment_page = None
         self._placeholder0 = QWidget()
         self._placeholder1 = QWidget()
+        self._placeholder3 = QWidget()
         self.stack.addWidget(self._placeholder0)    # index 0: 合同命名
         self.stack.addWidget(self._placeholder1)    # index 1: 合同发送台
         self.stack.addWidget(self.watermark_page)   # index 2: 水单识别
+        self.stack.addWidget(self._placeholder3)    # index 3: 付款跟踪
 
         # ── 侧栏 ──
         self._nav_buttons: list[QPushButton] = []
@@ -89,10 +99,11 @@ class UnifiedApp(QMainWindow):
     def _build_sidebar(self) -> QWidget:
         w = QFrame()
         w.setObjectName("sharedSidebar")
-        w.setFixedWidth(176)
+        w.setFixedWidth(188)
+        w.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         layout = QVBoxLayout(w)
-        layout.setContentsMargins(10, 12, 10, 10)
-        layout.setSpacing(4)
+        layout.setContentsMargins(14, 16, 14, 14)
+        layout.setSpacing(8)
 
         title = QLabel("采购工作台")
         title.setObjectName("appTitle")
@@ -116,7 +127,7 @@ class UnifiedApp(QMainWindow):
 
         layout.addStretch()
 
-        version = QLabel("v2.3 — 统一版")
+        version = QLabel("v2.4 — 统一版")
         version.setObjectName("versionLabel")
         layout.addWidget(version)
 
@@ -125,35 +136,25 @@ class UnifiedApp(QMainWindow):
     def _build_topbar(self) -> QWidget:
         bar = QFrame()
         bar.setObjectName("topbar")
-        bar.setFixedHeight(62)
+        bar.setFixedHeight(76)
 
         layout = QHBoxLayout(bar)
-        layout.setContentsMargins(18, 10, 18, 10)
-        layout.setSpacing(14)
+        layout.setContentsMargins(24, 13, 24, 13)
+        layout.setSpacing(18)
 
         title_col = QVBoxLayout()
-        title_col.setSpacing(2)
-        self._module_title = QLabel(_NAV_ITEMS[0][0])
+        title_col.setSpacing(5)
+        self._module_title = QLabel(_nav_display_name(_NAV_ITEMS[0][0]))
         self._module_title.setObjectName("topbarTitle")
+        self._module_title.setMinimumHeight(34)
         self._module_subtitle = QLabel(_NAV_ITEMS[0][1])
         self._module_subtitle.setObjectName("topbarSubtitle")
+        self._module_subtitle.setMinimumHeight(18)
         title_col.addWidget(self._module_title)
         title_col.addWidget(self._module_subtitle)
         layout.addLayout(title_col)
 
         layout.addStretch(1)
-
-        for i, (name, desc) in enumerate(_NAV_ITEMS):
-            btn = QPushButton(name)
-            btn.setObjectName("topNavItem")
-            btn.setCheckable(True)
-            btn.setFlat(True)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setToolTip(desc)
-            btn.setProperty("pageIndex", i)
-            btn.clicked.connect(lambda checked, idx=i: self._switch_page(idx))
-            self._nav_buttons.append(btn)
-            layout.addWidget(btn)
 
         search = QLineEdit()
         search.setObjectName("globalSearch")
@@ -166,9 +167,7 @@ class UnifiedApp(QMainWindow):
 
     def _switch_page(self, index: int) -> None:
         if index == 2:
-            # 水单识别 — 直接加载，无需延迟
-            self.stack.setCurrentIndex(index)
-            self._sync_navigation(index)
+            self._fade_to(index)
             return
 
         if not self._lazy_loaded.get(index):
@@ -183,8 +182,28 @@ class UnifiedApp(QMainWindow):
                 return
             self._lazy_loaded[index] = True
 
+        self._fade_to(index)
+
+    def _fade_to(self, index: int) -> None:
+        """Crossfade transition between pages."""
+        old = self.stack.currentWidget()
         self.stack.setCurrentIndex(index)
         self._sync_navigation(index)
+        new_page = self.stack.currentWidget()
+        if old is None or old is new_page:
+            return
+        # Fade in the new page
+        if new_page:
+            effect = QGraphicsOpacityEffect(new_page)
+            new_page.setGraphicsEffect(effect)
+            anim = QPropertyAnimation(effect, b"opacity")
+            anim.setDuration(180)
+            anim.setStartValue(0.4)
+            anim.setEndValue(1.0)
+            anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+            anim.finished.connect(lambda page=new_page: page.setGraphicsEffect(None))
+            self._page_transition_anim = anim
+            anim.start()
 
     def _lazy_load_page(self, index: int) -> None:
         if index == 0:
@@ -211,11 +230,24 @@ class UnifiedApp(QMainWindow):
             self._placeholder1 = None
             self.stack.insertWidget(1, self.workbench_page)
 
+        elif index == 3:
+            # 付款跟踪
+            from unified.payment_view import PaymentTrackingView
+            self.payment_page = PaymentTrackingView(parent=self, shell=self)
+            self.stack.removeWidget(self._placeholder3)
+            self._placeholder3.deleteLater()
+            self._placeholder3 = None
+            self.stack.insertWidget(3, self.payment_page)
+
     def _sync_navigation(self, index: int) -> None:
         for btn in self._nav_buttons:
-            btn.setChecked(btn.property("pageIndex") == index)
+            page_index = int(btn.property("pageIndex"))
+            active = page_index == index
+            btn.setChecked(active)
+            label = _NAV_ITEMS[page_index][0]
+            btn.setText(f"|  {label}" if active else f"   {label}")
         if hasattr(self, "_module_title"):
-            self._module_title.setText(_NAV_ITEMS[index][0])
+            self._module_title.setText(_nav_display_name(_NAV_ITEMS[index][0]))
             self._module_subtitle.setText(_NAV_ITEMS[index][1])
 
     # ── 拖放支持 ──────────────────────────────────────────────────────
@@ -262,6 +294,14 @@ class UnifiedApp(QMainWindow):
                 if r == QMessageBox.StandardButton.No:
                     event.ignore()
                     return
+
+        # 付款跟踪数据库清理
+        if self.payment_page is not None:
+            try:
+                from unified.payment_db import close_db
+                close_db()
+            except Exception:
+                pass
 
         event.accept()
 

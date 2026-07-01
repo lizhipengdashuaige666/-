@@ -283,7 +283,9 @@ class WatermarkApp(QWidget):
         list_card.setObjectName("card")
         list_card.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         if getattr(self._shell, '_theme_overrides', {}).get("_mode") == "light":
-            _style.apply_shadow(list_card, blur=12, offset=(0, 3), alpha=0.045)
+            _style.apply_shadow(list_card, elevation=1, is_light=True)
+        else:
+            _style.apply_shadow(list_card, elevation=1, is_light=False)
         lc = QVBoxLayout(list_card)
         lc.setContentsMargins(14, 12, 14, 12)
         lc.setSpacing(8)
